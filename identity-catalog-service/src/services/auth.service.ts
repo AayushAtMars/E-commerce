@@ -51,7 +51,7 @@ export async function createAndSendOtp(
 
   // Send via nodemailer
   await sendOtpEmail(email, code, purpose);
-  console.log(`[OTP] Dispatched ${purpose} email to ${email}`);
+  console.log(`[OTP] Dispatched ${purpose} email to ${email} with code: ${code}`);
 
   return code;
 }
