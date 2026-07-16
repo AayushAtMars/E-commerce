@@ -1,0 +1,1 @@
+export { FlashSaleScreen } from './BestSellersScreen';

@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "Fashion Store",
+    "slug": "fashion-store",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#401900"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.fashionstore.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#401900"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.fashionstore.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-video",
+      "expo-font"
+    ]
+  }
+}
