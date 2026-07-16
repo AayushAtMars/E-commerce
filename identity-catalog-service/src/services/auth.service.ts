@@ -49,8 +49,10 @@ export async function createAndSendOtp(
 
   await Otp.create({ email, code, purpose, expiresAt });
 
-  // Send via nodemailer
-  await sendOtpEmail(email, code, purpose);
+  // Send via nodemailer in the background to prevent API timeouts
+  sendOtpEmail(email, code, purpose).catch(err => {
+    console.error(`[OTP] Failed to send email to ${email}:`, err);
+  });
   console.log(`[OTP] Dispatched ${purpose} email to ${email}`);
 
   return code;
