@@ -62,7 +62,7 @@ export function MyOrdersScreen() {
     },
   });
 
-  const { data: orders, isLoading, refetch, isRefetching } = useQuery({
+  const { data: orders, isLoading, refetch, isRefetching, error } = useQuery({
     queryKey: ['myOrders'],
     queryFn: async () => {
       const res = await commerceApiModule.listOrders();
@@ -142,7 +142,9 @@ export function MyOrdersScreen() {
               </View>
               <Text style={styles.emptyTitle}>No {activeTab} Orders</Text>
               <Text style={styles.emptySub}>
-                {activeTab === 'Active'
+                {error
+                  ? `Failed: ${(error as any)?.message || 'Unknown error'}`
+                  : activeTab === 'Active'
                   ? 'Place an order to see it here.'
                   : `Your ${activeTab.toLowerCase()} orders will appear here.`}
               </Text>

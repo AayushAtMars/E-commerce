@@ -10,7 +10,7 @@ async function test() {
     const orders = await db.collection('orders').find({}).toArray();
     console.log("Orders count:", orders.length);
     if (orders.length > 0) {
-      console.log("First order userId type:", typeof orders[0].userId, "value:", orders[0].userId);
+      console.log("Last order:", JSON.stringify(orders[orders.length - 1], null, 2));
     }
   } else {
     console.log("No orders collection!");

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Modal } from 'react-native';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute, RouteProp, CommonActions } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { CartStackParamList } from '../../navigation/types';
