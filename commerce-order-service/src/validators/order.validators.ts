@@ -2,17 +2,16 @@ import { z } from 'zod';
 
 export const createOrderSchema = z.object({
   shippingAddress: z.object({
-    title: z.string().optional(),
-    recipientName: z.string().min(1),
-    phone: z.string().min(1),
-    streetAddress: z.string().min(1),
+    label: z.string().min(1),
+    line1: z.string().min(1),
+    floor: z.string().optional(),
     city: z.string().min(1),
     state: z.string().min(1),
-    country: z.string().min(1),
-    postalCode: z.string().min(1),
+    country: z.string().optional(),
+    pincode: z.string().min(1),
   }).strict(),
-  shippingType: z.enum(['Standard', 'Express', 'NextDay']).optional(),
-  paymentMethod: z.enum(['CreditCard', 'ApplePay', 'GooglePay', 'PayPal', 'Wallet']).optional(),
+  shippingType: z.enum(['Economy', 'Cargo', 'Express']).optional(),
+  paymentMethod: z.enum(['Cash', 'Wallet', 'Credit Card', 'PayPal', 'Apple Pay', 'Google Pay', 'UPI', 'Credit/Debit Card', 'Netbanking', 'Cash on Delivery']).optional(),
   promoCode: z.string().optional(),
 }).strict();
 
