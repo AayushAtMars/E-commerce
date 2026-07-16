@@ -177,7 +177,7 @@ export function SelectPaymentScreen() {
                 <body style="background-color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
                   <script>
                     var options = {
-                      "key": "rzp_test_TDtS7cm7VEUZUg", 
+                      "key": "${process.env.EXPO_PUBLIC_RAZORPAY_KEY}", 
                       "amount": "${Math.max((subtotal + shippingCost) * 100, 10000)}", 
                       "currency": "INR",
                       "name": "Premium Store",

@@ -13,11 +13,15 @@ export function errorMiddleware(
   _next: NextFunction
 ): void {
   const statusCode = err.statusCode ?? 500;
-  const message = err.message ?? 'Internal Server Error';
+  
+  // Mask generic 500 errors so we don't leak raw database/internal info to users
+  const isInternal = statusCode === 500;
+  const message = isInternal 
+    ? 'An unexpected error occurred. Please try again later.'
+    : (err.message ?? 'Internal Server Error');
 
-  if (process.env.NODE_ENV !== 'production') {
-    console.error(`[ERROR] ${statusCode}: ${message}`, err.stack);
-  }
+  // Always log the full trace server-side for debugging
+  console.error(`[ERROR] ${statusCode}: ${err.message ?? 'Internal Error'}`, err.stack);
 
   res.status(statusCode).json({
     success: false,

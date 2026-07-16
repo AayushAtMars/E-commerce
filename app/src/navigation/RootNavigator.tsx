@@ -11,7 +11,7 @@ import type { RootParamList } from './types';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { colors } from '../theme/colors';
 import * as Location from 'expo-location';
-// Notifications removed temporarily to prevent Expo Go error
+import * as Notifications from 'expo-notifications';
 
 const Root = createNativeStackNavigator<RootParamList>();
 
@@ -35,12 +35,11 @@ export function RootNavigator() {
         }
 
         try {
-          // Expo Go SDK 53+ throws big errors even in try/catch if we call Notifications in Expo Go.
-          // We bypass it for now.
-          setNeedsNotification(true); // Still prompt in UI, but don't call native API
+          const notifStatus = await Notifications.getPermissionsAsync();
+          setNeedsNotification(notifStatus.status !== 'granted');
         } catch (e) {
-          console.log('Skipping real notification check in Expo Go');
-          setNeedsNotification(true); 
+          console.log('Skipping real notification check in Expo Go', e);
+          setNeedsNotification(false); // don't block app if it crashes
         }
       }
       setCheckingPerms(false);

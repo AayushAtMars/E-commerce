@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { cloudinary } from '../config/cloudinary';
 import multer from 'multer';
 import streamifier from 'streamifier';
+import { fromBuffer } from 'file-type';
 
 // Use memory storage so we stream directly to Cloudinary (no temp files)
 export const upload = multer({
@@ -40,8 +41,16 @@ export async function uploadFiles(req: Request, res: Response, next: NextFunctio
     }
 
     const urls = await Promise.all(
-      files.map((file) => {
-        const isVideo = file.mimetype.startsWith('video/');
+      files.map(async (file) => {
+        // Strict content validation (magic numbers)
+        const typeInfo = await fromBuffer(file.buffer);
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/quicktime'];
+        
+        if (!typeInfo || !allowedTypes.includes(typeInfo.mime)) {
+          throw new Error(`Invalid file content detected. Allowed types are: ${allowedTypes.join(', ')}`);
+        }
+
+        const isVideo = typeInfo.mime.startsWith('video/');
         return uploadToCloudinary(file.buffer, 'reviews', isVideo ? 'video' : 'image');
       }),
     );

@@ -21,9 +21,16 @@ export const env = {
   CLOUDINARY_CLOUD_NAME: requireEnv('CLOUDINARY_CLOUD_NAME'),
   CLOUDINARY_API_KEY: requireEnv('CLOUDINARY_API_KEY'),
   CLOUDINARY_API_SECRET: requireEnv('CLOUDINARY_API_SECRET'),
+
+  // Email
+  SMTP_HOST: requireEnv('SMTP_HOST'),
+  SMTP_PORT: parseInt(requireEnv('SMTP_PORT'), 10),
+  SMTP_USER: requireEnv('SMTP_USER'),
+  SMTP_PASS: requireEnv('SMTP_PASS'),
+  SMTP_FROM: requireEnv('SMTP_FROM'),
+
   RATE_LIMIT_PUBLIC_MAX: parseInt(process.env.RATE_LIMIT_PUBLIC_MAX ?? '100', 10),
   RATE_LIMIT_AUTH_MAX: parseInt(process.env.RATE_LIMIT_AUTH_MAX ?? '5', 10),
   RATE_LIMIT_AUTH_MAX_CONSECUTIVE_FAILS: parseInt(process.env.RATE_LIMIT_AUTH_MAX_CONSECUTIVE_FAILS ?? '5', 10),
   RATE_LIMIT_USER_MAX: parseInt(process.env.RATE_LIMIT_USER_MAX ?? '200', 10),
 };
-

@@ -4,6 +4,7 @@ import { env } from '../config/env';
 import { User } from '../models/User';
 import { Otp } from '../models/Otp';
 import { createError } from '../middlewares/error.middleware';
+import { sendOtpEmail } from './email.service';
 
 const SALT_ROUNDS = 12;
 const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes
@@ -48,9 +49,9 @@ export async function createAndSendOtp(
 
   await Otp.create({ email, code, purpose, expiresAt });
 
-  // In production: send via email provider (Resend/SendGrid)
-  // For now: log to console (mock)
-  console.log(`[OTP] ${purpose} code for ${email}: ${code} (expires ${expiresAt.toISOString()})`);
+  // Send via nodemailer
+  await sendOtpEmail(email, code, purpose);
+  console.log(`[OTP] Dispatched ${purpose} email to ${email}`);
 
   return code;
 }
