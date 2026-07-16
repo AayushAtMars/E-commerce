@@ -23,6 +23,18 @@ services:
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
+      - key: JWT_ACCESS_EXPIRES
+        value: 15m
+      - key: JWT_REFRESH_EXPIRES
+        value: 7d
+      - key: RATE_LIMIT_PUBLIC_MAX
+        value: "100"
+      - key: RATE_LIMIT_AUTH_MAX
+        value: "5"
+      - key: RATE_LIMIT_AUTH_MAX_CONSECUTIVE_FAILS
+        value: "5"
+      - key: RATE_LIMIT_USER_MAX
+        value: "200"
       - key: SMTP_HOST
         sync: false
       - key: SMTP_PORT
@@ -52,3 +64,15 @@ services:
         sync: false
       - key: INTERNAL_SERVICE_KEY
         sync: false
+      - key: JWT_ACCESS_EXPIRES
+        value: 15m
+      - key: JWT_REFRESH_EXPIRES
+        value: 7d
+      - key: RATE_LIMIT_PUBLIC_MAX
+        value: "100"
+      - key: RATE_LIMIT_AUTH_MAX
+        value: "5"
+      - key: RATE_LIMIT_AUTH_MAX_CONSECUTIVE_FAILS
+        value: "5"
+      - key: RATE_LIMIT_USER_MAX
+        value: "200"
