@@ -14,10 +14,14 @@ export function validate(schemas: ValidationSchemas) {
         req.body = schemas.body.parse(req.body);
       }
       if (schemas.query) {
-        req.query = schemas.query.parse(req.query) as any;
+        const validated = schemas.query.parse(req.query);
+        for (const key in req.query) delete req.query[key];
+        Object.assign(req.query, validated);
       }
       if (schemas.params) {
-        req.params = schemas.params.parse(req.params) as any;
+        const validated = schemas.params.parse(req.params);
+        for (const key in req.params) delete req.params[key];
+        Object.assign(req.params, validated);
       }
       next();
     } catch (error) {
