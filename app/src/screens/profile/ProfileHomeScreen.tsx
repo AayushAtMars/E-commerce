@@ -47,10 +47,13 @@ export function ProfileHomeScreen() {
         {/* Profile Avatar Section */}
         <View style={styles.avatarSection}>
           <View style={styles.avatarWrapper}>
-            <Image
-              source={{ uri: user?.avatarUrl || 'https://i.pravatar.cc/150?img=47' }}
-              style={styles.avatar}
-            />
+            {user?.avatarUrl ? (
+              <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
+            ) : (
+              <View style={[styles.avatar, { backgroundColor: '#F0F0F0', justifyContent: 'center', alignItems: 'center' }]}>
+                <Feather name="user" size={48} color="#999" />
+              </View>
+            )}
             <TouchableOpacity style={styles.editBadge} onPress={() => navigation.navigate('YourProfile')}>
               <Feather name="edit-2" size={14} color="#FFF" />
             </TouchableOpacity>

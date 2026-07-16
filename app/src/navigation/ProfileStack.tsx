@@ -21,6 +21,7 @@ import { OrderDetailScreen } from '../screens/orders/OrderDetailScreen';
 import { TrackOrderScreen } from '../screens/orders/TrackOrderScreen';
 import { LiveLocationScreen } from '../screens/orders/LiveLocationScreen';
 import { EReceiptScreen } from '../screens/cart/EReceiptScreen';
+import { PaymentMethodsScreen } from '../screens/profile/PaymentMethodsScreen';
 import { ProfilePlaceholder } from '../screens/placeholders/ProfilePlaceholder';
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
@@ -44,6 +45,7 @@ export function ProfileStack() {
       <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
       <Stack.Screen name="HelpCenter" component={HelpCenterScreen} />
       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+      <Stack.Screen name="PaymentMethods" component={PaymentMethodsScreen} />
 
       {/* Order flow */}
       <Stack.Screen name="MyOrders" component={MyOrdersScreen} />
@@ -53,7 +55,6 @@ export function ProfileStack() {
       <Stack.Screen name="EReceipt" component={EReceiptScreen} />
 
       {/* Stubs — Phase 6+ */}
-      <Stack.Screen name="PaymentMethods" component={ProfilePlaceholder} />
       <Stack.Screen name="AddCard" component={ProfilePlaceholder} />
       <Stack.Screen name="LeaveReview" component={ProfilePlaceholder} />
     </Stack.Navigator>

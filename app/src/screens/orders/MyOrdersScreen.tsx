@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   RefreshControl,
   Image,
+  Dimensions,
+  ScrollView,
 } from 'react-native';
 import { useNavigation, CommonActions } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -18,7 +20,29 @@ import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 import { commerceApiModule } from '../../api/commerce.api';
+import { catalogApiModule } from '../../api/catalog.api';
 import Feather from '@expo/vector-icons/Feather';
+
+function OrderItemImage({ prod, style }: { prod: any; style: any }) {
+  const [image, setImage] = useState(prod.image);
+
+  React.useEffect(() => {
+    if (!image && prod.productId) {
+      catalogApiModule.getProduct(prod.productId).then(res => {
+        if (res.data?.data?.product?.images?.[0]) {
+          setImage(res.data.data.product.images[0]);
+        }
+      }).catch(() => {});
+    }
+  }, [prod.productId, image]);
+
+  return (
+    <Image 
+      source={{ uri: image || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=150&h=150' }} 
+      style={style} 
+    />
+  );
+}
 
 type ProfileNav = NativeStackNavigationProp<ProfileStackParamList>;
 
@@ -96,6 +120,16 @@ export function MyOrdersScreen() {
     );
   };
 
+  const TABS: OrderStatus[] = ['Active', 'Completed', 'Cancelled'];
+  const { width } = Dimensions.get('window');
+  const scrollViewRef = React.useRef<ScrollView>(null);
+
+  const handleTabPress = (tab: OrderStatus) => {
+    setActiveTab(tab);
+    const index = TABS.indexOf(tab);
+    scrollViewRef.current?.scrollTo({ x: index * width, animated: true });
+  };
+
   return (
     <View style={styles.root}>
       {/* Header */}
@@ -111,11 +145,11 @@ export function MyOrdersScreen() {
 
       {/* Tabs */}
       <View style={styles.tabRow}>
-        {(['Active', 'Completed', 'Cancelled'] as OrderStatus[]).map((tab) => (
+        {TABS.map((tab) => (
           <TouchableOpacity
             key={tab}
             style={styles.tab}
-            onPress={() => setActiveTab(tab)}
+            onPress={() => handleTabPress(tab)}
           >
             <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tab}</Text>
             {activeTab === tab && <View style={styles.tabIndicator} />}
@@ -126,123 +160,148 @@ export function MyOrdersScreen() {
       {isLoading ? (
         <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />
       ) : (
-        <FlatList
-          data={filtered}
-          keyExtractor={(item) => item._id}
-          contentContainerStyle={styles.list}
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} colors={[colors.primary]} />}
-          ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <View style={styles.emptyIconContainer}>
-                <Feather 
-                  name={activeTab === 'Active' ? 'package' : activeTab === 'Completed' ? 'check-circle' : 'x-circle'} 
-                  size={42} 
-                  color="#4A2511" 
-                />
-              </View>
-              <Text style={styles.emptyTitle}>No {activeTab} Orders</Text>
-              <Text style={styles.emptySub}>
-                {error
-                  ? `Failed: ${(error as any)?.message || 'Unknown error'}`
-                  : activeTab === 'Active'
-                  ? 'Place an order to see it here.'
-                  : `Your ${activeTab.toLowerCase()} orders will appear here.`}
-              </Text>
-            </View>
-          }
-          renderItem={({ item }) => {
-            const firstItem = item.items[0];
-            if (!firstItem) return null;
+        <ScrollView
+          ref={scrollViewRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={(e) => {
+            const index = Math.round(e.nativeEvent.contentOffset.x / width);
+            if (TABS[index] && TABS[index] !== activeTab) {
+              setActiveTab(TABS[index]);
+            }
+          }}
+        >
+          {TABS.map((currentTab) => {
+            const tabFiltered = (orders ?? []).filter((o) =>
+              STATUS_FILTERS[currentTab].includes(o.status)
+            );
 
             return (
-              <View style={styles.orderCard}>
-                {/* Top row: order number + status badge */}
-                <View style={styles.cardTopRow}>
-                  <Text style={styles.orderNumber}>ID : <Text style={styles.orderNumberHash}>{item.orderNumber}</Text></Text>
-                  <View style={[styles.statusBadge, activeTab === 'Cancelled' && styles.statusBadgeCancelled]}>
-                    <Text style={[styles.statusText, activeTab === 'Cancelled' && styles.statusTextCancelled]}>
-                      {activeTab === 'Cancelled' ? 'Cancel Order' : `${activeTab} Order`}
-                    </Text>
-                  </View>
-                </View>
-                
-                <View style={styles.divider} />
-
-                {/* Middle row: product info */}
-                {item.items.map((prod, idx) => (
-                  <TouchableOpacity 
-                    key={idx} 
-                    style={[styles.productRow, idx > 0 && { marginTop: 12 }]}
-                    onPress={() => {
-                      if (prod.productId) {
-                        (navigation as any).navigate('Home', {
-                          screen: 'ProductDetail',
-                          params: { productId: prod.productId }
-                        });
-                      } else {
-                        console.warn('No productId found for item', prod);
-                      }
-                    }}
-                  >
-                    <View style={styles.imageContainer}>
-                      <Image source={{ uri: prod.image }} style={styles.productImage} />
-                    </View>
-                    <View style={styles.productInfo}>
-                      <Text style={styles.productTitle} numberOfLines={1}>{prod.title}</Text>
-                      <Text style={styles.productMeta}>
-                        {prod.category || 'Category'} | Size : {prod.size || 'XS'} | Qty : {prod.quantity}
+              <View key={currentTab} style={{ width }}>
+                <FlatList
+                  data={tabFiltered}
+                  keyExtractor={(item) => item._id}
+                  contentContainerStyle={styles.list}
+                  refreshControl={
+                    <RefreshControl refreshing={isRefetching} onRefresh={refetch} colors={[colors.primary]} />
+                  }
+                  ListEmptyComponent={
+                    <View style={styles.emptyState}>
+                      <View style={styles.emptyIconContainer}>
+                        <Feather 
+                          name={currentTab === 'Active' ? 'package' : currentTab === 'Completed' ? 'check-circle' : 'x-circle'} 
+                          size={42} 
+                          color="#4A2511" 
+                        />
+                      </View>
+                      <Text style={styles.emptyTitle}>No {currentTab} Orders</Text>
+                      <Text style={styles.emptySub}>
+                        {error && currentTab === activeTab
+                          ? `Failed: ${(error as any)?.message || 'Unknown error'}`
+                          : currentTab === 'Active'
+                          ? 'Place an order to see it here.'
+                          : `Your ${currentTab.toLowerCase()} orders will appear here.`}
                       </Text>
-                      {prod.rating != null ? (
-                        <View style={styles.ratingRow}>
-                          <Feather name="star" size={14} color="#FFA500" />
-                          <Text style={styles.ratingText}>{prod.rating}</Text>
-                        </View>
-                      ) : null}
-                      <Text style={styles.productPrice}>₹{prod.price.toFixed(2)}</Text>
                     </View>
-                  </TouchableOpacity>
-                ))}
+                  }
+                  renderItem={({ item }) => {
+                    const firstItem = item.items[0];
+                    if (!firstItem) return null;
 
-                {/* Bottom row: action buttons */}
-                <View style={styles.cardBottomRow}>
-                  {activeTab === 'Active' && (
-                    <>
-                      <TouchableOpacity 
-                        style={[styles.cancelBtn, cancelMutation.isPending && { opacity: 0.5 }]}
-                        onPress={() => cancelMutation.mutate(item._id)}
-                        disabled={cancelMutation.isPending}
-                      >
-                        <Text style={styles.cancelBtnText}>Cancel</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity 
-                        style={styles.trackBtn}
-                        onPress={() => navigation.navigate('TrackOrder', { orderId: item._id })}
-                      >
-                        <Text style={styles.trackBtnText}>Track Order</Text>
-                      </TouchableOpacity>
-                    </>
-                  )}
-                  {activeTab === 'Completed' && (
-                    <TouchableOpacity 
-                      style={styles.trackBtn}
-                      onPress={() => navigation.navigate('EReceipt', { orderId: item._id })}
-                    >
-                      <Text style={styles.trackBtnText}>Receipt</Text>
-                    </TouchableOpacity>
-                  )}
-                  {activeTab === 'Cancelled' && (
-                    <TouchableOpacity 
-                      style={styles.trackBtn}
-                      onPress={() => handleReorder(item)}
-                    >
-                      <Text style={styles.trackBtnText}>Re - Order</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
+                    return (
+                      <View style={styles.orderCard}>
+                        {/* Top row: order number + status badge */}
+                        <View style={styles.cardTopRow}>
+                          <Text style={styles.orderNumber}>ID : <Text style={styles.orderNumberHash}>{item.orderNumber}</Text></Text>
+                          <View style={[styles.statusBadge, currentTab === 'Cancelled' && styles.statusBadgeCancelled]}>
+                            <Text style={[styles.statusText, currentTab === 'Cancelled' && styles.statusTextCancelled]}>
+                              {currentTab === 'Cancelled' ? 'Cancel Order' : `${currentTab} Order`}
+                            </Text>
+                          </View>
+                        </View>
+                        
+                        <View style={styles.divider} />
+
+                        {/* Middle row: product info */}
+                        {item.items.map((prod, idx) => (
+                          <TouchableOpacity 
+                            key={idx} 
+                            style={[styles.productRow, idx > 0 && { marginTop: 12 }]}
+                            onPress={() => {
+                              if (prod.productId) {
+                                (navigation as any).navigate('Home', {
+                                  screen: 'ProductDetail',
+                                  params: { productId: prod.productId }
+                                });
+                              } else {
+                                console.warn('No productId found for item', prod);
+                              }
+                            }}
+                          >
+                            <View style={styles.imageContainer}>
+                              <OrderItemImage prod={prod} style={styles.productImage} />
+                            </View>
+                            <View style={styles.productInfo}>
+                              <Text style={styles.productTitle} numberOfLines={1}>{prod.title}</Text>
+                              <Text style={styles.productMeta}>
+                                {prod.category || 'Category'} | Size : {prod.size || 'XS'} | Qty : {prod.quantity}
+                              </Text>
+                              {prod.rating != null ? (
+                                <View style={styles.ratingRow}>
+                                  <Feather name="star" size={14} color="#FFA500" />
+                                  <Text style={styles.ratingText}>{prod.rating}</Text>
+                                </View>
+                              ) : null}
+                              <Text style={styles.productPrice}>₹{prod.price.toFixed(2)}</Text>
+                            </View>
+                          </TouchableOpacity>
+                        ))}
+
+                        {/* Bottom row: action buttons */}
+                        <View style={styles.cardBottomRow}>
+                          {currentTab === 'Active' && (
+                            <>
+                              <TouchableOpacity 
+                                style={[styles.cancelBtn, cancelMutation.isPending && { opacity: 0.5 }]}
+                                onPress={() => cancelMutation.mutate(item._id)}
+                                disabled={cancelMutation.isPending}
+                              >
+                                <Text style={styles.cancelBtnText}>Cancel</Text>
+                              </TouchableOpacity>
+                              <TouchableOpacity 
+                                style={styles.trackBtn}
+                                onPress={() => navigation.navigate('TrackOrder', { orderId: item._id })}
+                              >
+                                <Text style={styles.trackBtnText}>Track Order</Text>
+                              </TouchableOpacity>
+                            </>
+                          )}
+                          {currentTab === 'Completed' && (
+                            <TouchableOpacity 
+                              style={styles.trackBtn}
+                              onPress={() => navigation.navigate('EReceipt', { orderId: item._id })}
+                            >
+                              <Text style={styles.trackBtnText}>Receipt</Text>
+                            </TouchableOpacity>
+                          )}
+                          {currentTab === 'Cancelled' && (
+                            <TouchableOpacity 
+                              style={styles.trackBtn}
+                              onPress={() => handleReorder(item)}
+                            >
+                              <Text style={styles.trackBtnText}>Re - Order</Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      </View>
+                    );
+                  }}
+                />
               </View>
             );
-          }}
-        />
+          })}
+        </ScrollView>
       )}
     </View>
   );

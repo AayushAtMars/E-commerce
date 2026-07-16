@@ -14,7 +14,31 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { ProfileStackParamList } from '../../navigation/types';
 import { commerceApiModule } from '../../api/commerce.api';
+import { catalogApiModule } from '../../api/catalog.api';
 import Feather from '@expo/vector-icons/Feather';
+
+function OrderItemImage({ prod, style }: { prod: any; style: any }) {
+  const [image, setImage] = React.useState(prod.image);
+
+  React.useEffect(() => {
+    if ((!image || image.trim() === '') && prod.productId) {
+      catalogApiModule.getProduct(prod.productId).then(res => {
+        if (res.data?.data?.product?.images?.[0]) {
+          setImage(res.data.data.product.images[0]);
+        }
+      }).catch(() => {});
+    }
+  }, [prod.productId, image]);
+
+  const finalUri = (image && image.trim() !== '') ? image : 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=150&h=150';
+
+  return (
+    <Image 
+      source={{ uri: finalUri }} 
+      style={style} 
+    />
+  );
+}
 
 type ProfileNav = NativeStackNavigationProp<ProfileStackParamList>;
 type TrackRoute = RouteProp<ProfileStackParamList, 'TrackOrder'>;
@@ -86,7 +110,7 @@ export function TrackOrderScreen() {
         {order.items.map((item: any, idx: number) => (
           <View key={idx} style={styles.productCard}>
             <View style={styles.imageContainer}>
-              <Image source={{ uri: item.image }} style={styles.productImage} />
+              <OrderItemImage prod={item} style={styles.productImage} />
             </View>
             <View style={styles.productInfo}>
               <View style={styles.productTitleRow}>

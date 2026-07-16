@@ -90,7 +90,7 @@ export function SelectPaymentScreen() {
         CommonActions.reset({
           index: 1,
           routes: [
-            { name: 'Home' as any },
+            { name: 'CartScreen' as any },
             {
               name: 'PaymentSuccess' as any,
               params: {

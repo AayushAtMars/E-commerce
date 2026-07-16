@@ -9,6 +9,8 @@ import {
   FlatList,
   Dimensions,
   ActivityIndicator,
+  ToastAndroid,
+  Platform,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -93,6 +95,9 @@ export function ProductDetailScreen() {
       color: selectedColor ?? (product.colors[0] || ''),
       quantity: 1, // Defaulting to 1 as quantity selector is removed in design
     });
+    if (Platform.OS === 'android') {
+      ToastAndroid.show('Added to Cart! 🛍️', ToastAndroid.SHORT);
+    }
     navigation.goBack();
   };
 

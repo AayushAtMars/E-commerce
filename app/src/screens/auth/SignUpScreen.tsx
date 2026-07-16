@@ -49,16 +49,8 @@ export function SignUpScreen() {
   const onSubmit = async (data: FormData) => {
     setLoading(true);
     try {
-      const res = await authApi.signup({ name: data.name, email: data.email, password: data.password });
-      
-      const otp = res.data?.data?.otp;
-      if (otp) {
-        Alert.alert('Sign Up Successful', `Your OTP is: ${otp}`, [
-          { text: 'OK', onPress: () => navigation.navigate('VerifyOtp', { email: data.email, mode: 'signup' }) }
-        ]);
-      } else {
-        navigation.navigate('VerifyOtp', { email: data.email, mode: 'signup' });
-      }
+      await authApi.signup({ name: data.name, email: data.email, password: data.password });
+      navigation.navigate('VerifyOtp', { email: data.email, mode: 'signup' });
     } catch (err: any) {
       Alert.alert('Sign Up Failed', err?.message ?? 'Something went wrong. Please try again.');
     } finally {

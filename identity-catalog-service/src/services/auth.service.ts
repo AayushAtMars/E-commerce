@@ -51,7 +51,7 @@ export async function createAndSendOtp(
 
   // Send via nodemailer
   await sendOtpEmail(email, code, purpose);
-  console.log(`[OTP] Dispatched ${purpose} email to ${email} with code: ${code}`);
+  console.log(`[OTP] Dispatched ${purpose} email to ${email}`);
 
   return code;
 }
@@ -100,9 +100,9 @@ export async function signupService(data: {
   });
 
   // Send OTP
-  const code = await createAndSendOtp(user.email, 'signup');
+  await createAndSendOtp(user.email, 'signup');
 
-  return { userId: user._id, email: user.email, otp: code };
+  return { userId: user._id, email: user.email };
 }
 
 export async function verifySignupOtp(email: string, code: string) {

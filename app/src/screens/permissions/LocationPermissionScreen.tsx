@@ -27,32 +27,33 @@ export function LocationPermissionScreen() {
       
       if (status !== 'granted') {
         Alert.alert('Permission Denied', 'Please enable location permissions in your settings to use this feature.');
-        // We still let them pass if they denied it actively, or we can keep blocking.
-        // For better UX, if they explicitly denied, we should let them enter manually.
         return;
       }
 
-      const location = await Location.getCurrentPositionAsync({});
-      
-      try {
-        const geocode = await Location.reverseGeocodeAsync({
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude
-        });
-        
-        if (geocode && geocode.length > 0) {
-          const place = geocode[0];
-          const locationString = [place.city || place.subregion, place.country].filter(Boolean).join(', ');
-          setLocation(locationString || 'Unknown Location');
-        }
-      } catch (e) {
-        console.warn('Reverse geocoding failed', e);
-      }
-      
+      // Let the user move on immediately after granting permission
       setNeedsLocation(false);
+
+      // Fetch location in the background without blocking the flow
+      (async () => {
+        try {
+          const location = await Location.getCurrentPositionAsync({});
+          const geocode = await Location.reverseGeocodeAsync({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude
+          });
+          
+          if (geocode && geocode.length > 0) {
+            const place = geocode[0];
+            const locationString = [place.city || place.subregion, place.country].filter(Boolean).join(', ');
+            setLocation(locationString || 'Unknown Location');
+          }
+        } catch (e) {
+          console.warn('Background location fetch failed:', e);
+        }
+      })();
       
     } catch (e: any) {
-      Alert.alert('Error', e.message || 'Could not fetch location.');
+      console.warn('Permission request error:', e);
     } finally {
       setLoading(false);
     }

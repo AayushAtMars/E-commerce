@@ -17,6 +17,30 @@ import Feather from '@expo/vector-icons/Feather';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { commerceApiModule } from '../../api/commerce.api';
 import { chatApiModule } from '../../api/chat.api';
+import { catalogApiModule } from '../../api/catalog.api';
+
+function OrderItemImage({ prod, style }: { prod: any; style: any }) {
+  const [image, setImage] = React.useState(prod.image);
+
+  React.useEffect(() => {
+    if ((!image || image.trim() === '') && prod.productId) {
+      catalogApiModule.getProduct(prod.productId).then(res => {
+        if (res.data?.data?.product?.images?.[0]) {
+          setImage(res.data.data.product.images[0]);
+        }
+      }).catch(() => {});
+    }
+  }, [prod.productId, image]);
+
+  const finalUri = (image && image.trim() !== '') ? image : 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=150&h=150';
+
+  return (
+    <Image 
+      source={{ uri: finalUri }} 
+      style={style} 
+    />
+  );
+}
 
 type ProfileNav = NativeStackNavigationProp<ProfileStackParamList>;
 type LiveLocationRoute = RouteProp<ProfileStackParamList, 'TrackLiveLocation'>;
@@ -194,8 +218,8 @@ export function LiveLocationScreen() {
   }, [deliveryAddressText]);
 
   const startChatMutation = useMutation({
-    mutationFn: async (partner: any) => {
-      const res = await chatApiModule.startChat(partner);
+    mutationFn: async (partnerId: string) => {
+      const res = await chatApiModule.startChat(partnerId);
       return res.data.data;
     },
     onSuccess: (data) => {
@@ -218,8 +242,8 @@ export function LiveLocationScreen() {
   });
 
   const handleMessage = () => {
-    if (!agent) return;
-    startChatMutation.mutate(agent);
+    if (!agent?._id) return;
+    startChatMutation.mutate(agent._id);
   };
 
   const handleCall = () => {
@@ -337,7 +361,7 @@ export function LiveLocationScreen() {
         <Text style={styles.sectionTitle}>Order Details</Text>
         {order?.items?.map((item: any, idx: number) => (
           <View key={idx} style={styles.orderItem}>
-            <Image source={{ uri: item.image }} style={styles.itemImage} />
+            <OrderItemImage prod={item} style={styles.itemImage} />
             <View style={styles.itemInfo}>
               <Text style={styles.itemName} numberOfLines={1}>{item.title}</Text>
               <Text style={styles.itemMeta}>

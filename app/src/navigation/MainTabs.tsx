@@ -79,7 +79,7 @@ export function MainTabs() {
         component={HomeStack} 
         options={({ route }) => {
           const routeName = getFocusedRouteNameFromRoute(route) ?? 'HomeScreen';
-          const isHidden = ['ProductDetail', 'Reviews', 'LeaveReview', 'Search', 'Filter'].includes(routeName);
+          const isHidden = routeName !== 'HomeScreen';
           return {
             tabBarStyle: isHidden ? { display: 'none' } : styles.tabBar,
           };
@@ -110,7 +110,7 @@ export function MainTabs() {
         component={ProfileStack} 
         options={({ route }) => {
           const routeName = getFocusedRouteNameFromRoute(route) ?? 'ProfileHome';
-          const isHidden = ['MyOrders', 'OrderDetail', 'TrackOrder', 'TrackLiveLocation', 'TopUpSuccess', 'MyWallet', 'Settings', 'NotificationSettings', 'PasswordManager', 'DeleteAccount'].includes(routeName);
+          const isHidden = routeName !== 'ProfileHome';
           return {
             tabBarStyle: isHidden ? { display: 'none' } : styles.tabBar,
           };

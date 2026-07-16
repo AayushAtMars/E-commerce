@@ -67,17 +67,17 @@ export const catalogApiModule = {
   updateProfile: (data: {
     name?: string; phone?: string; dob?: string;
     gender?: 'Male' | 'Female' | 'Other'; avatarUrl?: string;
-  }) => catalogApi.patch('/api/profile/me', data),
+  }) => catalogApi.patch('/api/profile', data),
 
   changePassword: (data: { currentPassword: string; newPassword: string }) =>
-    catalogApi.patch('/api/profile/me/password', data),
+    catalogApi.patch('/api/profile/password', data),
 
   deleteAccount: (data: { password: string }) =>
-    catalogApi.delete('/api/profile/me', { data }),
+    catalogApi.delete('/api/profile', { data }),
 
   updateNotificationPrefs: (prefs: {
     orderUpdates?: boolean; promotions?: boolean; newArrivals?: boolean;
-  }) => catalogApi.patch('/api/profile/me/notifications', prefs),
+  }) => catalogApi.patch('/api/profile/notifications', prefs),
 
   // Coupons (Phase 5)
   listCoupons: () => catalogApi.get('/api/coupons'),

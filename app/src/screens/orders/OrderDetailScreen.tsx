@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  ToastAndroid,
+  Platform,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp, CommonActions } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -17,7 +19,31 @@ import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 import { commerceApiModule } from '../../api/commerce.api';
+import { catalogApiModule } from '../../api/catalog.api';
 import Feather from '@expo/vector-icons/Feather';
+
+function OrderItemImage({ prod, style }: { prod: any; style: any }) {
+  const [image, setImage] = React.useState(prod.image);
+
+  React.useEffect(() => {
+    if ((!image || image.trim() === '') && prod.productId) {
+      catalogApiModule.getProduct(prod.productId).then(res => {
+        if (res.data?.data?.product?.images?.[0]) {
+          setImage(res.data.data.product.images[0]);
+        }
+      }).catch(() => {});
+    }
+  }, [prod.productId, image]);
+
+  const finalUri = (image && image.trim() !== '') ? image : 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=150&h=150';
+
+  return (
+    <Image 
+      source={{ uri: finalUri }} 
+      style={style} 
+    />
+  );
+}
 
 type ProfileNav = NativeStackNavigationProp<ProfileStackParamList>;
 type DetailRoute = RouteProp<ProfileStackParamList, 'OrderDetail'>;
@@ -63,14 +89,13 @@ export function OrderDetailScreen() {
     mutationFn: () => commerceApiModule.reorder(orderId),
     onSuccess: (res) => {
       const { itemCount } = res.data.data;
-      Alert.alert(
-        'Added to Cart! 🛍️',
-        `${itemCount} item${itemCount > 1 ? 's' : ''} added to your cart.`,
-        [
-          { text: 'Go to Cart', onPress: () => navigation.getParent()?.navigate('Cart') },
-          { text: 'OK', style: 'cancel' },
-        ]
-      );
+      const msg = `${itemCount} item${itemCount > 1 ? 's' : ''} added to your cart.`;
+      if (Platform.OS === 'android') {
+        ToastAndroid.show(msg, ToastAndroid.SHORT);
+      } else {
+        Alert.alert('Added to Cart! 🛍️', msg);
+      }
+      navigation.getParent()?.navigate('Cart');
     },
     onError: (err: unknown) => {
       const axiosErr = err as { response?: { data?: { message?: string } } };
@@ -152,11 +177,7 @@ export function OrderDetailScreen() {
               }}
             >
               <View style={styles.itemImageBox}>
-                {item.image ? (
-                  <Image source={{ uri: item.image }} style={styles.itemImage} />
-                ) : (
-                  <Text style={{ fontSize: 24 }}>👕</Text>
-                )}
+                <OrderItemImage prod={item} style={styles.itemImage} />
               </View>
               <View style={styles.itemInfo}>
                 <Text style={styles.itemTitle} numberOfLines={2}>{item.title}</Text>

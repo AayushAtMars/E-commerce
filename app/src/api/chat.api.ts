@@ -7,8 +7,8 @@ export const chatApiModule = {
   },
 
   // Start or retrieve a chat session with a delivery partner
-  startChat: (partner: any) => {
-    return commerceApi.post('/api/chat/start', { partner });
+  startChat: (partnerId: string) => {
+    return commerceApi.post('/api/chat/start', { partnerId });
   },
 
   // Get messages for a specific chat

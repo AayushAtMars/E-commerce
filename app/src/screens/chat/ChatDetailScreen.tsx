@@ -155,7 +155,7 @@ export function ChatDetailScreen() {
 
         <View style={[styles.messageRow, isMe && styles.messageRowMe]}>
           {!isMe && (
-            <Image source={{ uri: contact?.avatar }} style={styles.msgAvatar} />
+            <Image source={{ uri: contact?.avatar || 'https://randomuser.me/api/portraits/men/45.jpg' }} style={styles.msgAvatar} />
           )}
 
           <View style={[styles.messageGroup, isMe && styles.messageGroupMe]}>
@@ -190,7 +190,7 @@ export function ChatDetailScreen() {
         </TouchableOpacity>
         <TouchableOpacity style={styles.headerCenter}>
           <View style={styles.avatarContainer}>
-            <Image source={{ uri: contact?.avatar }} style={styles.headerAvatar} />
+            <Image source={{ uri: contact?.avatar || 'https://randomuser.me/api/portraits/men/45.jpg' }} style={styles.headerAvatar} />
             {contact?.online && <View style={styles.onlineBadge} />}
           </View>
           <View>
@@ -223,7 +223,7 @@ export function ChatDetailScreen() {
             ListFooterComponent={
               isTyping ? (
                 <View style={[styles.messageRow, { marginTop: 10, marginBottom: 20 }]}>
-                  <Image source={{ uri: contact?.avatar }} style={styles.msgAvatar} />
+                  <Image source={{ uri: contact?.avatar || 'https://randomuser.me/api/portraits/men/45.jpg' }} style={styles.msgAvatar} />
                   <TypingIndicator />
                 </View>
               ) : null
