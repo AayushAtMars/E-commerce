@@ -5,6 +5,9 @@ const cartItemSchema = z.object({
   size: z.string().optional(),
   color: z.string().optional(),
   quantity: z.number().min(1, 'Quantity must be at least 1').optional(),
+  title: z.string().optional(),
+  image: z.string().optional(),
+  price: z.number().optional(),
 }).strict();
 
 export const addItemSchema = cartItemSchema;
