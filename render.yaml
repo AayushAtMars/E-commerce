@@ -4,7 +4,7 @@ services:
     env: node
     plan: free
     rootDir: identity-catalog-service
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm start
     envVars:
       - key: PORT
@@ -51,7 +51,7 @@ services:
     env: node
     plan: free
     rootDir: commerce-order-service
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm start
     envVars:
       - key: PORT
