@@ -42,7 +42,7 @@ const SLIDES = [
     italicPart: 'Personal Fashion App\n',
     tail: 'for Every Occasion',
     sub: 'Lorem ipsum dolor sit amet, consectetur\nadipiscing elit, sed do eiusmod tempor incididunt',
-    image: require('../../../assets/images/onboarding/onboarding_bg_3_1784115148797.png'),
+    image: require('../../../assets/images/onboarding/onboarding_bg_3_1784115148797.jpg'),
   },
 ];
 

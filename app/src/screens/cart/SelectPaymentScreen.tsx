@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Modal } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, CommonActions } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { CartStackParamList } from '../../navigation/types';
 import Feather from '@expo/vector-icons/Feather';
@@ -8,6 +9,7 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { useCartStore } from '../../store/cartStore';
 import { commerceApiModule } from '../../api/commerce.api';
 import { WebView } from 'react-native-webview';
+import { useQueryClient } from '@tanstack/react-query';
 
 type CartNav = NativeStackNavigationProp<CartStackParamList>;
 type PaymentRoute = RouteProp<CartStackParamList, 'SelectPayment'>;
@@ -19,6 +21,7 @@ type PaymentMethodType = 'UPI' | 'Credit/Debit Card' | 'Netbanking' | 'Cash on D
 export function SelectPaymentScreen() {
   const navigation = useNavigation<CartNav>();
   const route = useRoute<PaymentRoute>();
+  const queryClient = useQueryClient();
   const { subtotal, shippingCost, shippingType, promoCode, selectedAddress } = route.params;
   const [selected, setSelected] = useState<PaymentMethodType>('UPI');
   const [loading, setLoading] = useState(false);
@@ -42,11 +45,10 @@ export function SelectPaymentScreen() {
       } else {
         await processOrder(addressToUse);
       }
-    } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } } };
+    } catch (err: any) {
       Alert.alert(
         'Order Failed',
-        axiosErr?.response?.data?.message ?? 'Something went wrong. Please try again.'
+        err?.message ?? 'Something went wrong. Please try again.'
       );
       setLoading(false);
     }
@@ -54,26 +56,57 @@ export function SelectPaymentScreen() {
 
   const processOrder = async (addressToUse: any) => {
     try {
-      await commerceApiModule.syncCart(items);
-      
+      const syncItems = items.map(item => ({
+        productId: item.productId,
+        size: item.size,
+        color: item.color,
+        quantity: item.quantity
+      }));
+      await commerceApiModule.syncCart(syncItems);
+      const cleanAddress = {
+        label: addressToUse.label,
+        line1: addressToUse.line1,
+        floor: addressToUse.floor,
+        city: addressToUse.city,
+        state: addressToUse.state,
+        country: addressToUse.country,
+        pincode: addressToUse.pincode,
+      };
+
       const res = await commerceApiModule.createOrder({
-        shippingAddress: addressToUse,
+        shippingAddress: cleanAddress,
         shippingType,
         paymentMethod: selected,
         promoCode,
       });
-      const { order } = res.data.data;
+
+      // Clear the local cart
       clearCart();
-      navigation.navigate('PaymentSuccess', {
-        orderId: order._id,
-        orderNumber: order.orderNumber,
-        total: order.total,
-      });
-    } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } } };
+
+      // Invalidate orders cache
+      queryClient.invalidateQueries({ queryKey: ['myOrders'] });
+
+      // Navigate to success
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 1,
+          routes: [
+            { name: 'Home' as any },
+            {
+              name: 'PaymentSuccess' as any,
+              params: {
+                orderId: res.data.data.order._id,
+                orderNumber: res.data.data.order.orderNumber,
+                total: res.data.data.order.total,
+              },
+            },
+          ],
+        })
+      );
+    } catch (err: any) {
       Alert.alert(
         'Order Failed',
-        axiosErr?.response?.data?.message ?? 'Something went wrong. Please try again.'
+        err?.message ?? 'Something went wrong. Please try again.'
       );
     } finally {
       setLoading(false);

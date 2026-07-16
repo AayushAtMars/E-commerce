@@ -68,7 +68,7 @@ export function SignUpScreen() {
     >
       {/* Top background area */}
       <ImageBackground
-        source={require('../../../assets/images/auth/signup_bg.png')}
+        source={require('../../../assets/images/auth/signup_bg.jpg')}
         style={styles.bgImage}
         imageStyle={{ resizeMode: 'cover' }}
       >
