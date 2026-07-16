@@ -100,9 +100,9 @@ export async function signupService(data: {
   });
 
   // Send OTP
-  await createAndSendOtp(user.email, 'signup');
+  const code = await createAndSendOtp(user.email, 'signup');
 
-  return { userId: user._id, email: user.email };
+  return { userId: user._id, email: user.email, otp: code };
 }
 
 export async function verifySignupOtp(email: string, code: string) {
