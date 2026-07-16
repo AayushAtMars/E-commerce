@@ -16,9 +16,7 @@ export function errorMiddleware(
   
   // Mask generic 500 errors so we don't leak raw database/internal info to users
   const isInternal = statusCode === 500;
-  const message = isInternal 
-    ? 'An unexpected error occurred. Please try again later.'
-    : (err.message ?? 'Internal Server Error');
+  const message = err.message || 'Internal Server Error';
 
   // Always log the full trace server-side for debugging
   console.error(`[ERROR] ${statusCode}: ${err.message ?? 'Internal Error'}`, err.stack);
