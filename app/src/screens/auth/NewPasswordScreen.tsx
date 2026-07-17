@@ -21,6 +21,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { authApi } from '../../api/auth.api';
 import { useAuthStore } from '../../store/authStore';
+import Feather from '@expo/vector-icons/Feather';
 
 type NewPasswordRoute = RouteProp<AuthStackParamList, 'NewPassword'>;
 
@@ -70,7 +71,7 @@ export function NewPasswordScreen() {
     >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <TouchableOpacity style={styles.back} onPress={() => navigation.goBack()}>
-          <Text style={styles.backText}>←</Text>
+          <Feather name="chevron-left" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
 
         <Text style={styles.title}>New Password</Text>
@@ -108,8 +109,8 @@ export function NewPasswordScreen() {
           )}
         />
 
-        <View style={{ marginTop: spacing.lg }}>
-          <Button title="Create New Password" onPress={handleSubmit(onSubmit)} loading={loading} />
+        <View style={styles.buttonContainer}>
+          <Button title="Create New Password" onPress={handleSubmit(onSubmit)} loading={loading} style={styles.submitBtn} />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -119,8 +120,24 @@ export function NewPasswordScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.white },
   content: { flexGrow: 1, paddingHorizontal: spacing.screenHorizontal, paddingBottom: 40 },
-  back: { marginTop: 52, marginBottom: spacing.xl, width: 44, height: 44, justifyContent: 'center' },
-  backText: { fontSize: 22, color: colors.textPrimary, fontWeight: typography.weights.semibold },
-  title: { fontSize: typography.sizes.xxxl, fontWeight: typography.weights.bold, color: colors.textPrimary, marginBottom: spacing.sm },
-  sub: { fontSize: typography.sizes.md, color: colors.textSecondary, lineHeight: 22, marginBottom: spacing.xl },
+  back: {
+    marginTop: 60,
+    marginBottom: spacing.xl,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.white,
+  },
+  title: { fontSize: 28, fontWeight: typography.weights.bold, color: colors.textPrimary, marginBottom: spacing.sm },
+  sub: { fontSize: typography.sizes.sm, color: colors.textSecondary, lineHeight: 22, marginBottom: 40 },
+  buttonContainer: { marginTop: spacing.xl, width: '100%' },
+  submitBtn: {
+    backgroundColor: colors.primary,
+    borderRadius: 30,
+    width: '100%',
+  },
 });
