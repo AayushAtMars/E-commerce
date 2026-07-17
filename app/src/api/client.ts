@@ -18,13 +18,13 @@ const COMMERCE_BASE_URL =
 
 export const catalogApi = axios.create({
   baseURL: CATALOG_BASE_URL,
-  timeout: 10_000,
+  timeout: 30_000,
   headers: { 'Content-Type': 'application/json' },
 });
 
 export const commerceApi = axios.create({
   baseURL: COMMERCE_BASE_URL,
-  timeout: 10_000,
+  timeout: 30_000,
   headers: { 'Content-Type': 'application/json' },
 });
 

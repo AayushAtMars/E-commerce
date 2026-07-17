@@ -87,7 +87,7 @@ export function VerifyOtpScreen() {
     try {
       await authApi.resendOtp({ email, purpose: mode === 'signup' ? 'signup' : 'forgotPassword' });
       setResendCooldown(60);
-      Alert.alert('OTP Sent', 'A new code has been sent. Check your console (dev mode).');
+      Alert.alert('OTP Sent', 'A new code has been sent to your email.');
     } catch (err: any) {
       Alert.alert('Error', err?.message ?? 'Could not resend OTP.');
     }

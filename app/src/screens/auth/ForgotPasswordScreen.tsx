@@ -20,6 +20,7 @@ import { spacing } from '../../theme/spacing';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { authApi } from '../../api/auth.api';
+import Feather from '@expo/vector-icons/Feather';
 
 const schema = z.object({ email: z.string().email('Enter a valid email') });
 type FormData = z.infer<typeof schema>;
@@ -39,7 +40,7 @@ export function ForgotPasswordScreen() {
       await authApi.forgotPassword(data.email);
       Alert.alert(
         'OTP Sent',
-        `If an account exists for ${data.email}, you'll receive an OTP in your console (dev mode).`,
+        `If an account exists for ${data.email}, you'll receive an OTP in your email.`,
         [{ text: 'OK', onPress: () => navigation.navigate('VerifyOtp', { email: data.email, mode: 'forgotPassword' }) }]
       );
     } catch (err: any) {
@@ -56,13 +57,15 @@ export function ForgotPasswordScreen() {
     >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <TouchableOpacity style={styles.back} onPress={() => navigation.goBack()}>
-          <Text style={styles.backText}>←</Text>
+          <Feather name="chevron-left" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
 
-        <Text style={styles.title}>Forgot Password?</Text>
-        <Text style={styles.sub}>
-          Enter your registered email. We'll send you a verification code.
-        </Text>
+        <View style={styles.header}>
+          <Text style={styles.title}>Forgot Password?</Text>
+          <Text style={styles.sub}>
+            Enter your registered email. We'll send you a verification code to reset your password.
+          </Text>
+        </View>
 
         <Controller
           control={control}
@@ -76,12 +79,13 @@ export function ForgotPasswordScreen() {
               error={errors.email?.message}
               keyboardType="email-address"
               autoCapitalize="none"
+              inputWrapperStyle={styles.customInput}
             />
           )}
         />
 
-        <View style={{ marginTop: spacing.lg }}>
-          <Button title="Send OTP" onPress={handleSubmit(onSubmit)} loading={loading} />
+        <View style={styles.buttonContainer}>
+          <Button title="Send OTP" onPress={handleSubmit(onSubmit)} loading={loading} style={styles.sendBtn} />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -91,8 +95,47 @@ export function ForgotPasswordScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.white },
   content: { flexGrow: 1, paddingHorizontal: spacing.screenHorizontal, paddingBottom: 40 },
-  back: { marginTop: 52, marginBottom: spacing.xl, width: 44, height: 44, justifyContent: 'center' },
-  backText: { fontSize: 22, color: colors.textPrimary, fontWeight: typography.weights.semibold },
-  title: { fontSize: typography.sizes.xxxl, fontWeight: typography.weights.bold, color: colors.textPrimary, marginBottom: spacing.sm },
-  sub: { fontSize: typography.sizes.md, color: colors.textSecondary, lineHeight: 22, marginBottom: spacing.xl },
+  back: {
+    marginTop: 60,
+    marginBottom: spacing.xl,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.white,
+  },
+  header: {
+    marginBottom: 40,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: typography.weights.bold,
+    color: colors.textPrimary,
+    marginBottom: spacing.sm,
+    textAlign: 'center',
+  },
+  sub: {
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+    lineHeight: 22,
+    textAlign: 'center',
+    paddingHorizontal: 20,
+  },
+  customInput: {
+    backgroundColor: '#F5F5F5',
+    borderWidth: 0,
+  },
+  buttonContainer: {
+    marginTop: spacing.xl,
+    width: '100%',
+  },
+  sendBtn: {
+    backgroundColor: colors.primary,
+    borderRadius: 30,
+    width: '100%',
+  },
 });

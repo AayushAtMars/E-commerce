@@ -52,7 +52,16 @@ export function SignInScreen() {
       setUser(user);
       // RootNavigator automatically switches to Main tab when isAuthenticated=true
     } catch (err: any) {
-      Alert.alert('Sign In Failed', err?.message ?? 'Invalid credentials. Please try again.');
+      if (err?.message === 'Please verify your email before logging in.') {
+        try {
+          await authApi.resendOtp({ email: data.email, purpose: 'signup' });
+          navigation.navigate('VerifyOtp', { email: data.email, mode: 'signup' });
+        } catch (resendErr: any) {
+          Alert.alert('Error', resendErr?.message ?? 'Could not send verification email.');
+        }
+      } else {
+        Alert.alert('Sign In Failed', err?.message ?? 'Invalid credentials. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
