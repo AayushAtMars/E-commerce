@@ -26,7 +26,8 @@ export async function verifyOtp(req: Request, res: Response, next: NextFunction)
       res.json({ success: true, message: 'Email verified.', data: result });
     } else {
       // For forgotPassword, just verify the OTP — reset happens on /reset-password
-      await authService.verifyOtp(email.toLowerCase(), code, 'forgotPassword');
+      // Pass false to ensure the OTP isn't deleted, so it's still there for resetPassword
+      await authService.verifyOtp(email.toLowerCase(), code, 'forgotPassword', false);
       res.json({ success: true, message: 'OTP verified.' });
     }
   } catch (err) {

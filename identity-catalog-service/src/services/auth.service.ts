@@ -61,7 +61,8 @@ export async function createAndSendOtp(
 export async function verifyOtp(
   email: string,
   code: string,
-  purpose: 'signup' | 'forgotPassword'
+  purpose: 'signup' | 'forgotPassword',
+  consume = true
 ): Promise<void> {
   const otp = await Otp.findOne({ email, purpose });
 
@@ -76,8 +77,10 @@ export async function verifyOtp(
     throw createError('Invalid OTP code.', 400, 'OTP_INVALID');
   }
 
-  // Consume the OTP
-  await otp.deleteOne();
+  // Consume the OTP only if requested
+  if (consume) {
+    await otp.deleteOne();
+  }
 }
 
 // ─── Auth flows ───────────────────────────────────────────────────────────────
