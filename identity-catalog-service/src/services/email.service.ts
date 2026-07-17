@@ -1,15 +1,7 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { env } from '../config/env';
 
-const transporter = nodemailer.createTransport({
-  host: env.SMTP_HOST,
-  port: env.SMTP_PORT,
-  secure: env.SMTP_PORT === 465, // true for 465, false for other ports
-  auth: {
-    user: env.SMTP_USER,
-    pass: env.SMTP_PASS,
-  },
-});
+const resend = new Resend(env.RESEND_API_KEY);
 
 export async function sendOtpEmail(to: string, otp: string, purpose: 'signup' | 'forgotPassword'): Promise<void> {
   const subject = purpose === 'signup' 
@@ -44,8 +36,8 @@ export async function sendOtpEmail(to: string, otp: string, purpose: 'signup' | 
     </div>
   `;
 
-  await transporter.sendMail({
-    from: env.SMTP_FROM,
+  await resend.emails.send({
+    from: 'onboarding@resend.dev', // using resend's default sender since it's a free test account
     to,
     subject,
     html,

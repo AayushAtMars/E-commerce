@@ -23,11 +23,7 @@ export const env = {
   CLOUDINARY_API_SECRET: requireEnv('CLOUDINARY_API_SECRET'),
 
   // Email
-  SMTP_HOST: requireEnv('SMTP_HOST'),
-  SMTP_PORT: parseInt(requireEnv('SMTP_PORT'), 10),
-  SMTP_USER: requireEnv('SMTP_USER'),
-  SMTP_PASS: requireEnv('SMTP_PASS'),
-  SMTP_FROM: requireEnv('SMTP_FROM'),
+  RESEND_API_KEY: requireEnv('RESEND_API_KEY'),
 
   RATE_LIMIT_PUBLIC_MAX: parseInt(process.env.RATE_LIMIT_PUBLIC_MAX ?? '100', 10),
   RATE_LIMIT_AUTH_MAX: parseInt(process.env.RATE_LIMIT_AUTH_MAX ?? '5', 10),
