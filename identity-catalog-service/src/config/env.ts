@@ -24,6 +24,7 @@ export const env = {
 
   // Email
   RESEND_API_KEY: requireEnv('RESEND_API_KEY'),
+  RESEND_FROM: process.env.RESEND_FROM ?? 'onboarding@resend.dev',
 
   RATE_LIMIT_PUBLIC_MAX: parseInt(process.env.RATE_LIMIT_PUBLIC_MAX ?? '100', 10),
   RATE_LIMIT_AUTH_MAX: parseInt(process.env.RATE_LIMIT_AUTH_MAX ?? '5', 10),

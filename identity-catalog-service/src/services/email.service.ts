@@ -37,7 +37,7 @@ export async function sendOtpEmail(to: string, otp: string, purpose: 'signup' | 
   `;
 
   await resend.emails.send({
-    from: 'onboarding@resend.dev', // using resend's default sender since it's a free test account
+    from: env.RESEND_FROM, // uses custom domain if set, defaults to onboarding@resend.dev
     to,
     subject,
     html,
