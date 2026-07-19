@@ -4,7 +4,7 @@ interface LoginProps {
   onLogin: () => void;
 }
 
-import { catalogApi } from '../api/client';
+import { orderApi } from '../api/client';
 
 export default function Login({ onLogin }: LoginProps) {
   const [email, setEmail] = useState('');
@@ -24,8 +24,8 @@ export default function Login({ onLogin }: LoginProps) {
     setError('');
     
     try {
-      // Verify the password (API key) by making a test request
-      await catalogApi.get('/admin/users', { 
+      // Verify the password (API key) by making a test request to order service
+      await orderApi.get('/admin/orders?limit=1', { 
         headers: { 'x-admin-api-key': password } 
       });
       
