@@ -14,6 +14,7 @@ import addressRoutes from './routes/address.routes';
 import profileRoutes from './routes/profile.routes';
 import couponRoutes from './routes/coupon.routes';
 import uploadRoutes from './routes/upload.routes';
+import adminRoutes from './routes/admin.routes';
 
 const app = express();
 
@@ -44,6 +45,7 @@ app.use('/api/addresses', userRateLimiter, addressRoutes);
 app.use('/api/profile', userRateLimiter, profileRoutes);
 app.use('/api/coupons', publicRateLimiter, couponRoutes);
 app.use('/api/upload', userRateLimiter, uploadRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/internal', internalProductRouter);
 
 // ─── 404 handler ─────────────────────────────────────────────────────────────
