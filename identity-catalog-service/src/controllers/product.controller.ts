@@ -68,3 +68,10 @@ export async function getProductPrice(req: Request, res: Response, next: NextFun
     res.json({ success: true, data });
   } catch (err) { next(err); }
 }
+
+export async function createProduct(req: Request, res: Response, next: NextFunction) {
+  try {
+    const product = await productService.createProduct(req.body);
+    res.status(201).json({ success: true, message: 'Product created successfully', data: { product } });
+  } catch (err) { next(err); }
+}

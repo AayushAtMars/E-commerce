@@ -18,3 +18,22 @@ export const paginationQuerySchema = z.object({
   page: z.string().optional(),
   limit: z.string().optional(),
 }).strict();
+
+export const createProductBodySchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().min(1, 'Description is required'),
+  category: z.string().min(1, 'Category is required'),
+  price: z.number().min(0, 'Price must be positive'),
+  discountPrice: z.number().min(0).optional(),
+  colors: z.array(z.string()).optional(),
+  sizes: z.array(z.string()).optional(),
+  images: z.array(z.string()).optional(),
+  rating: z.number().min(0).max(5).optional(),
+  reviewCount: z.number().min(0).optional(),
+  sellerName: z.string().min(1, 'Seller name is required'),
+  sellerAvatar: z.string().optional(),
+  sellerRole: z.string().optional(),
+  isFlashSale: z.boolean().optional(),
+  isBestSeller: z.boolean().optional(),
+  stock: z.number().min(0).optional(),
+}).strict();

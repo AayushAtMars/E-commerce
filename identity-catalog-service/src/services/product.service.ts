@@ -121,3 +121,11 @@ export async function getProductPriceInternal(productId: string) {
     title: product.title,
   };
 }
+
+// ─── Create Product (Admin) ───────────────────────────────────────────────────
+
+export async function createProduct(productData: Partial<IProduct>) {
+  const product = new Product(productData);
+  await product.save();
+  return product;
+}
