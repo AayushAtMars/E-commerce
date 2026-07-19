@@ -76,7 +76,7 @@ export default function Orders() {
                       {new Date(order.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 font-medium">
-                      ${(order.totalAmount || order.totalPrice || order.total || 0).toFixed(2)}
+                      ₹{(order.totalAmount || order.totalPrice || order.total || 0).toFixed(2)}
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>

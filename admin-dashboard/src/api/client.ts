@@ -1,12 +1,12 @@
 import axios from 'axios';
 
-// Using deployed production endpoints
+// Using env variables if provided, otherwise fallback to deployed production endpoints
 export const catalogApi = axios.create({
-  baseURL: 'https://identity-catalog-service.onrender.com/api',
+  baseURL: import.meta.env.VITE_CATALOG_API_URL || 'https://identity-catalog-service.onrender.com/api',
 });
 
 export const orderApi = axios.create({
-  baseURL: 'https://commerce-order-service.onrender.com/api',
+  baseURL: import.meta.env.VITE_ORDER_API_URL || 'https://commerce-order-service.onrender.com/api',
 });
 
 // Add interceptors to attach API Key

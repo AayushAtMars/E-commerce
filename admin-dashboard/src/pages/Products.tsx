@@ -124,8 +124,8 @@ export default function Products() {
                         {product.category}
                       </span>
                     </td>
-                    <td className="px-6 py-4 font-medium text-gray-900">
-                      ${product.price.toFixed(2)}
+                    <td className="px-6 py-4 font-medium">
+                      ₹{product.price.toFixed(2)}
                     </td>
                     <td className="px-6 py-4">
                       <span className={`font-medium ${product.stock < 10 ? 'text-red-500' : 'text-emerald-500'}`}>
@@ -175,7 +175,7 @@ export default function Products() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Price ($)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
                     <input required name="price" value={formData.price} onChange={handleInputChange} type="number" min="0" step="0.01" className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all" />
                   </div>
 

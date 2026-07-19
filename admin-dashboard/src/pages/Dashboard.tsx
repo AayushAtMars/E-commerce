@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { catalogApi, orderApi } from '../api/client';
-import { Users, Package, ShoppingCart, DollarSign } from 'lucide-react';
+import { Users, Package, ShoppingCart, IndianRupee } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function Dashboard() {
@@ -54,7 +54,7 @@ export default function Dashboard() {
   }, []);
 
   const statCards = [
-    { name: 'Total Revenue', value: `$${stats.revenue.toFixed(2)}`, icon: <DollarSign size={24} className="text-emerald-500" /> },
+    { name: 'Total Revenue', value: `₹${stats.revenue.toFixed(2)}`, icon: <IndianRupee size={24} className="text-emerald-500" /> },
     { name: 'Total Orders', value: stats.orders, icon: <ShoppingCart size={24} className="text-blue-500" /> },
     { name: 'Active Products', value: stats.products, icon: <Package size={24} className="text-purple-500" /> },
     { name: 'Active Users', value: stats.users, icon: <Users size={24} className="text-orange-500" /> },
@@ -94,12 +94,12 @@ export default function Dashboard() {
                   axisLine={false} 
                   tickLine={false} 
                   tick={{ fill: '#9ca3af', fontSize: 12 }} 
-                  tickFormatter={(val) => `$${val}`}
+                  tickFormatter={(val) => `₹${val}`}
                   dx={-10}
                 />
                 <Tooltip 
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  formatter={(value: any) => [`$${Number(value).toFixed(2)}`, 'Revenue']}
+                  formatter={(value: any) => [`₹${Number(value).toFixed(2)}`, 'Revenue']}
                 />
                 <Line 
                   type="monotone" 
