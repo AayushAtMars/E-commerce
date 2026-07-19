@@ -11,11 +11,14 @@ export default function Login({ onLogin }: LoginProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email === 'yoaayush14@gmail.com' && password === 'admin123') {
-      localStorage.setItem('adminApiKey', 'choose_a_super_secret_password_here');
+    // We don't hardcode the API key anymore!
+    // Instead, the password the admin types IS the API key.
+    // If they type the wrong one, the backend will just reject their requests with 401.
+    if (email === 'yoaayush14@gmail.com') {
+      localStorage.setItem('adminApiKey', password);
       onLogin();
     } else {
-      setError('Invalid email or password');
+      setError('Invalid admin email');
     }
   };
 
