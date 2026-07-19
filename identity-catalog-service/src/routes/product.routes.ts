@@ -4,10 +4,12 @@ import { internalAuthMiddleware } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validate.middleware';
 import { productIdParamsSchema, searchProductsQuerySchema, paginationQuerySchema, createProductBodySchema } from '../validators/product.validators';
 
+import { adminAuthMiddleware } from '../middlewares/adminAuth.middleware';
+
 const router = Router();
 
-// Public routes (for testing/admin, we're not adding auth middleware to POST / for now based on requirements)
-router.post('/', validate({ body: createProductBodySchema }), controller.createProduct);
+// Public routes (for testing/admin, protected by adminAuthMiddleware)
+router.post('/', adminAuthMiddleware, validate({ body: createProductBodySchema }), controller.createProduct);
 router.get('/', validate({ query: paginationQuerySchema }), controller.listProducts);
 router.get('/search', validate({ query: searchProductsQuerySchema }), controller.searchProducts);
 router.get('/featured', controller.getFeatured);

@@ -22,6 +22,10 @@ export const env = {
   CLOUDINARY_API_KEY: requireEnv('CLOUDINARY_API_KEY'),
   CLOUDINARY_API_SECRET: requireEnv('CLOUDINARY_API_SECRET'),
 
+  // External
+  REDIS_URL: requireEnv('REDIS_URL'),
+  ADMIN_API_KEY: process.env.ADMIN_API_KEY || 'default_secret_key',
+
   // Email
   RESEND_API_KEY: requireEnv('RESEND_API_KEY'),
   RESEND_FROM: process.env.RESEND_FROM ?? 'onboarding@resend.dev',
