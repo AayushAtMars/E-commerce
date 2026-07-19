@@ -11,7 +11,6 @@ function requireEnv(key: string): string {
 
 export const env = {
   PORT: parseInt(process.env.PORT ?? '4002', 10),
-  RABBITMQ_URL: requireEnv('RABBITMQ_URL'),
   ADMIN_API_KEY: process.env.ADMIN_API_KEY || 'default_secret_key',
   MONGODB_URI: requireEnv('MONGODB_URI'),
   JWT_SECRET: requireEnv('JWT_SECRET'),
