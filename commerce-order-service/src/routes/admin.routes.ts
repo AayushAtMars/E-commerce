@@ -62,4 +62,12 @@ router.post('/fix-old-orders', async (_req: Request, res: Response, next: NextFu
   } catch (err) { next(err); }
 });
 
+// GET /api/admin/orders — fetch all orders across all users for admin dashboard
+router.get('/orders', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const orders = await Order.find().sort({ createdAt: -1 });
+    res.json({ success: true, data: { orders, count: orders.length } });
+  } catch (err) { next(err); }
+});
+
 export default router;
