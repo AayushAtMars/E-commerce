@@ -4,21 +4,38 @@ interface LoginProps {
   onLogin: () => void;
 }
 
+import { catalogApi } from '../api/client';
+
 export default function Login({ onLogin }: LoginProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // We don't hardcode the API key anymore!
-    // Instead, the password the admin types IS the API key.
-    // If they type the wrong one, the backend will just reject their requests with 401.
-    if (email === 'yoaayush14@gmail.com') {
+    
+    if (email !== 'yoaayush14@gmail.com') {
+      setError('Invalid admin email');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    
+    try {
+      // Verify the password (API key) by making a test request
+      await catalogApi.get('/admin/users', { 
+        headers: { 'x-admin-api-key': password } 
+      });
+      
+      // If successful, save and login
       localStorage.setItem('adminApiKey', password);
       onLogin();
-    } else {
-      setError('Invalid admin email');
+    } catch (err) {
+      setError('Invalid API key password');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -64,9 +81,10 @@ export default function Login({ onLogin }: LoginProps) {
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-primary-600 hover:bg-primary-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all shadow-md"
+              disabled={loading}
+              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-primary-600 hover:bg-primary-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all shadow-md ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
-              Sign in
+              {loading ? 'Verifying...' : 'Sign in'}
             </button>
           </div>
         </form>

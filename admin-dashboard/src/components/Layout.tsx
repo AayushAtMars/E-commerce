@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Package, ShoppingCart, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, LogOut, Menu, X } from 'lucide-react';
 
 interface LayoutProps {
   onLogout: () => void;
@@ -7,6 +8,7 @@ interface LayoutProps {
 
 export default function Layout({ onLogout }: LayoutProps) {
   const location = useLocation();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const navItems = [
     { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} /> },
@@ -15,19 +17,42 @@ export default function Layout({ onLogout }: LayoutProps) {
   ];
 
   return (
-    <div className="flex h-screen bg-gray-50 text-gray-900 font-sans">
+    <div className="flex h-screen bg-gray-50 text-gray-900 font-sans overflow-hidden">
+      
+      {/* Mobile Header */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-100 flex items-center justify-between px-4 z-40">
+        <h1 className="text-xl font-bold tracking-tight text-primary-600">Store Admin</h1>
+        <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-gray-500 hover:text-gray-900">
+          <Menu size={24} />
+        </button>
+      </div>
+
+      {/* Mobile Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/20 z-40 md:hidden" 
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-100 flex flex-col shadow-sm">
-        <div className="h-16 flex items-center px-6 border-b border-gray-100">
+      <aside 
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 flex flex-col shadow-xl md:shadow-sm transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+      >
+        <div className="h-16 flex items-center justify-between px-6 border-b border-gray-100">
           <h1 className="text-xl font-bold tracking-tight text-primary-600">Store Admin</h1>
+          <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-400 hover:text-gray-900">
+            <X size={20} />
+          </button>
         </div>
-        <nav className="flex-1 py-6 px-4 space-y-1">
+        <nav className="flex-1 py-6 px-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <Link
                 key={item.path}
                 to={item.path}
+                onClick={() => setIsSidebarOpen(false)}
                 className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                   isActive 
                     ? 'bg-primary-50 text-primary-600 font-semibold' 
@@ -52,8 +77,8 @@ export default function Layout({ onLogout }: LayoutProps) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto bg-gray-50/50">
-        <div className="max-w-7xl mx-auto p-8">
+      <main className="flex-1 overflow-auto bg-gray-50/50 mt-16 md:mt-0 relative w-full">
+        <div className="max-w-7xl mx-auto p-4 md:p-8">
           <Outlet />
         </div>
       </main>
