@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Layout from './components/Layout';
 import Products from './pages/Products';
+import ProductDetail from './pages/ProductDetail';
 import Orders from './pages/Orders';
 import Users from './pages/Users';
 import UserDetail from './pages/UserDetail';
@@ -36,6 +37,7 @@ function App() {
         >
           <Route index element={<Dashboard />} />
           <Route path="products" element={<Products />} />
+          <Route path="products/:id" element={<ProductDetail />} />
           <Route path="orders" element={<Orders />} />
           <Route path="users" element={<Users />} />
           <Route path="users/:id" element={<UserDetail />} />

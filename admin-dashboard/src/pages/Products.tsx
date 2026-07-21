@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { catalogApi } from '../api/client';
-import { Plus, MoreVertical, X } from 'lucide-react';
+import { Plus, MoreVertical, X, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function Products() {
   const [products, setProducts] = useState<any[]>([]);
@@ -133,9 +134,13 @@ export default function Products() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button className="text-gray-400 hover:text-gray-900 transition-colors">
-                        <MoreVertical size={18} />
-                      </button>
+                      <Link 
+                        to={`/products/${product._id}`}
+                        className="inline-flex items-center space-x-1 text-primary-600 hover:text-primary-800 font-medium transition-colors"
+                      >
+                        <span>View</span>
+                        <ChevronRight size={16} />
+                      </Link>
                     </td>
                   </tr>
                 ))}
