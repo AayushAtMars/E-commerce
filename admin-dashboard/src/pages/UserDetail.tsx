@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { catalogApi, orderApi } from '../api/client';
-import { ArrowLeft, Package, User, Calendar, Mail, Phone, MapPin } from 'lucide-react';
+import { ArrowLeft, Package, User, Calendar, Mail, Phone } from 'lucide-react';
 
 export default function UserDetail() {
   const { id } = useParams<{ id: string }>();

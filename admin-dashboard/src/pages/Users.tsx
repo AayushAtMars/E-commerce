@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { catalogApi } from '../api/client';
-import { Users as UsersIcon, Search, MoreVertical, ChevronRight } from 'lucide-react';
+import { Users as UsersIcon, Search, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Users() {
