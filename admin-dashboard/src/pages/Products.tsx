@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { catalogApi } from '../api/client';
-import { Plus, MoreVertical, X, ChevronRight } from 'lucide-react';
+import { Plus, X, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Products() {
