@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Package, ShoppingCart, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, LogOut, Menu, X, Users as UsersIcon } from 'lucide-react';
 
 interface LayoutProps {
   onLogout: () => void;
@@ -14,6 +14,7 @@ export default function Layout({ onLogout }: LayoutProps) {
     { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} /> },
     { name: 'Products', path: '/products', icon: <Package size={20} /> },
     { name: 'Orders', path: '/orders', icon: <ShoppingCart size={20} /> },
+    { name: 'Users', path: '/users', icon: <UsersIcon size={20} /> },
   ];
 
   return (

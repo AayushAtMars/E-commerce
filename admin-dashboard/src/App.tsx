@@ -5,6 +5,8 @@ import Dashboard from './pages/Dashboard';
 import Layout from './components/Layout';
 import Products from './pages/Products';
 import Orders from './pages/Orders';
+import Users from './pages/Users';
+import UserDetail from './pages/UserDetail';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -35,6 +37,8 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="products" element={<Products />} />
           <Route path="orders" element={<Orders />} />
+          <Route path="users" element={<Users />} />
+          <Route path="users/:id" element={<UserDetail />} />
         </Route>
       </Routes>
     </Router>
