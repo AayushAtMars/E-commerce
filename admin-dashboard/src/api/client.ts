@@ -12,7 +12,7 @@ export const orderApi = axios.create({
 // Add interceptors to attach API Key
 const attachToken = (config: any) => {
   const apiKey = localStorage.getItem('adminApiKey');
-  if (apiKey && config.headers) {
+  if (apiKey && config.headers && !config.headers['x-admin-api-key']) {
     config.headers['x-admin-api-key'] = apiKey;
   }
   return config;

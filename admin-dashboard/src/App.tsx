@@ -22,6 +22,7 @@ function App() {
   const handleLogout = () => {
     setIsAuthenticated(false);
     localStorage.removeItem('adminIsAuthenticated');
+    localStorage.removeItem('adminApiKey');
   };
 
   return (
