@@ -22,7 +22,9 @@ const handle401 = (error: any) => {
     localStorage.removeItem('adminRole');
     localStorage.removeItem('adminName');
     localStorage.removeItem('adminIsAuthenticated');
-    window.location.href = '/login';
+    if (window.location.pathname !== '/login') {
+      window.location.href = '/login';
+    }
   }
   return Promise.reject(error);
 };
