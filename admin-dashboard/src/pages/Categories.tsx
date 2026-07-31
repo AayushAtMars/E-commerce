@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { catalogApi } from '../api/client';
-import { Plus, Edit, Eye, EyeOff, LayoutList } from 'lucide-react';
+import { Plus, Edit, LayoutList } from 'lucide-react';
 
 export default function Categories() {
   const [categories, setCategories] = useState<any[]>([]);

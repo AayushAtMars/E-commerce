@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { orderApi } from '../api/client';
 import { Mail, Clock, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
@@ -53,7 +53,7 @@ export default function Notifications() {
             orderId: order._id,
             orderNumber: order.orderNumber,
             recipient: order.userName || 'Customer',
-            email: order.userEmail,
+            email: order.userEmail || '',
             type,
             timestamp: new Date(history.timestamp),
             status: 'Delivered'

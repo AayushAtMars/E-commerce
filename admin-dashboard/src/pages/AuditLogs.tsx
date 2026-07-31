@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { catalogApi, orderApi } from '../api/client';
 import { ShieldAlert, User, Activity } from 'lucide-react';
 import { format } from 'date-fns';
