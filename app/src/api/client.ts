@@ -107,12 +107,7 @@ const errorInterceptor = async (error: any) => {
     }
   }
 
-  // Normalise to { success: false, message, code }
-  const message =
-    error.response?.data?.message ??
-    error.message ??
-    'An unexpected error occurred';
-  return Promise.reject({ success: false, message, code: error.response?.status });
+  return Promise.reject(error);
 };
 
 catalogApi.interceptors.response.use(undefined, errorInterceptor);

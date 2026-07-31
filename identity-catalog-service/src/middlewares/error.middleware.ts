@@ -12,6 +12,15 @@ export function errorMiddleware(
   res: Response,
   _next: NextFunction
 ): void {
+  // Handle Zod validation errors
+  if (err.name === 'ZodError') {
+    return res.status(400).json({
+      success: false,
+      message: JSON.parse(err.message).map((e: any) => e.message).join(', '),
+      code: 'VALIDATION_ERROR',
+    });
+  }
+
   const statusCode = err.statusCode ?? 500;
   
   // Mask generic 500 errors so we don't leak raw database/internal info to users
