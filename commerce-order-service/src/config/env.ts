@@ -12,6 +12,7 @@ function requireEnv(key: string): string {
 export const env = {
   PORT: parseInt(process.env.PORT ?? '4002', 10),
   ADMIN_API_KEY: process.env.ADMIN_API_KEY || 'default_secret_key',
+  ADMIN_JWT_SECRET: process.env.ADMIN_JWT_SECRET || 'admin_fallback_secret_change_in_prod',
   MONGODB_URI: requireEnv('MONGODB_URI'),
   JWT_SECRET: requireEnv('JWT_SECRET'),
   JWT_ACCESS_EXPIRES: process.env.JWT_ACCESS_EXPIRES ?? '15m',
@@ -24,4 +25,6 @@ export const env = {
   RATE_LIMIT_AUTH_MAX: parseInt(process.env.RATE_LIMIT_AUTH_MAX ?? '5', 10),
   RATE_LIMIT_AUTH_MAX_CONSECUTIVE_FAILS: parseInt(process.env.RATE_LIMIT_AUTH_MAX_CONSECUTIVE_FAILS ?? '5', 10),
   RATE_LIMIT_USER_MAX: parseInt(process.env.RATE_LIMIT_USER_MAX ?? '200', 10),
+  RESEND_API_KEY: process.env.RESEND_API_KEY ?? 're_123456789',
+  RESEND_FROM: process.env.RESEND_FROM ?? 'onboarding@resend.dev',
 };

@@ -1,11 +1,15 @@
-import { useState } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Eye, EyeOff, Shield } from 'lucide-react';
+import HCaptcha from '@hcaptcha/react-hcaptcha';
+import { catalogApi } from '../api/client';
 
 interface LoginProps {
   onLogin: () => void;
 }
 
-import { orderApi } from '../api/client';
+// hCaptcha site key — use your own from hcaptcha.com
+// In dev, use the always-pass test key: 10000000-ffff-ffff-ffff-000000000001
+const HCAPTCHA_SITE_KEY = import.meta.env.VITE_HCAPTCHA_SITE_KEY || '10000000-ffff-ffff-ffff-000000000001';
 
 export default function Login({ onLogin }: LoginProps) {
   const [email, setEmail] = useState('');
@@ -13,102 +17,132 @@ export default function Login({ onLogin }: LoginProps) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<HCaptcha>(null);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (email !== 'yoaayush14@gmail.com') {
-      setError('Invalid admin email');
+    setError('');
+
+    if (!captchaToken) {
+      setError('Please complete the CAPTCHA verification.');
       return;
     }
 
     setLoading(true);
-    setError('');
-    
-    const trimmedPassword = password.trim();
-    
     try {
-      // Verify the password (API key) by making a test request to order service
-      await orderApi.get('/admin/orders?limit=1', { 
-        headers: { 'x-admin-api-key': trimmedPassword } 
+      const res = await catalogApi.post('/admin/auth/login', {
+        email: email.trim().toLowerCase(),
+        password,
+        captchaToken,
       });
-      
-      // If successful, save and login
-      localStorage.setItem('adminApiKey', trimmedPassword);
+
+      const { token, admin } = res.data.data;
+      localStorage.setItem('adminToken', token);
+      localStorage.setItem('adminRole', admin.role);
+      localStorage.setItem('adminName', admin.name);
       onLogin();
     } catch (err: any) {
+      const msg = err.response?.data?.message;
       if (err.message === 'Network Error') {
-        setError('Network Error. Please check your internet connection or ad blocker.');
+        setError('Network Error — check your internet connection.');
+      } else if (err.response?.status === 400) {
+        setError('CAPTCHA failed. Please try again.');
       } else {
-        setError('Invalid API key password');
+        setError(msg || 'Invalid email or password.');
       }
-      console.error("Login Error:", err);
+      // Reset CAPTCHA on error
+      captchaRef.current?.resetCaptcha();
+      setCaptchaToken(null);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl shadow-gray-100 border border-gray-100">
         <div>
+          <div className="flex justify-center mb-4">
+            <div className="w-14 h-14 bg-primary-50 rounded-2xl flex items-center justify-center">
+              <Shield className="w-7 h-7 text-primary-600" />
+            </div>
+          </div>
           <h2 className="text-center text-3xl font-extrabold text-gray-900 tracking-tight">
             Admin Login
           </h2>
           <p className="mt-2 text-center text-sm text-gray-500">
-            Sign in to manage your store
+            Sign in with your admin credentials
           </p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
-              <input
-                type="email"
-                required
-                className="appearance-none relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition-all"
-                placeholder="Enter admin email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  className="appearance-none relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition-all pr-10"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" aria-hidden="true" />
-                  ) : (
-                    <Eye className="h-5 w-5" aria-hidden="true" />
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
 
-          {error && <div className="text-red-500 text-sm text-center font-medium bg-red-50 py-2 rounded-lg">{error}</div>}
+        <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
+            <input
+              id="admin-email"
+              type="email"
+              required
+              autoComplete="email"
+              className="appearance-none block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition-all"
+              placeholder="admin@fashionstore.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
 
           <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-primary-600 hover:bg-primary-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all shadow-md ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
-            >
-              {loading ? 'Verifying...' : 'Sign in'}
-            </button>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <div className="relative">
+              <input
+                id="admin-password"
+                type={showPassword ? 'text' : 'password'}
+                required
+                autoComplete="current-password"
+                className="appearance-none block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition-all pr-10"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
           </div>
+
+          {/* hCaptcha widget */}
+          <div className="flex justify-center">
+            <HCaptcha
+              ref={captchaRef}
+              sitekey={HCAPTCHA_SITE_KEY}
+              onVerify={(token) => setCaptchaToken(token)}
+              onExpire={() => setCaptchaToken(null)}
+            />
+          </div>
+
+          {error && (
+            <div className="text-red-600 text-sm text-center font-medium bg-red-50 border border-red-100 py-2.5 rounded-xl">
+              {error}
+            </div>
+          )}
+
+          <button
+            id="admin-login-btn"
+            type="submit"
+            disabled={loading || !captchaToken}
+            className={`w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-primary-600 hover:bg-primary-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all shadow-md ${(loading || !captchaToken) ? 'opacity-60 cursor-not-allowed' : ''}`}
+          >
+            {loading ? 'Signing in...' : 'Sign in'}
+          </button>
         </form>
+
+        <p className="text-center text-xs text-gray-400 pt-2">
+          Protected by hCaptcha — Fashion Store Admin Panel
+        </p>
       </div>
     </div>
   );

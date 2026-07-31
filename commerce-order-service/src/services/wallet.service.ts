@@ -74,6 +74,28 @@ export async function debitWallet(
   return wallet;
 }
 
+// ─── Refund Wallet ──────────────────────────────────────────────────────────────
+
+export async function refundWallet(
+  userId: string,
+  amount: number,
+  orderId: string,
+  description: string
+) {
+  const wallet = await getOrCreate(userId);
+  wallet.balance += amount;
+  wallet.transactions.push({
+    type: 'credit',
+    amount,
+    source: 'refund',
+    description,
+    orderId,
+    createdAt: new Date(),
+  });
+  await wallet.save();
+  return wallet;
+}
+
 // ─── Get transaction history ──────────────────────────────────────────────────
 
 export async function getTransactions(userId: string, page = 1, limit = 20) {

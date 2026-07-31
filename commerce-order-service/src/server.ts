@@ -11,6 +11,7 @@ import orderRoutes from './routes/order.routes';
 import walletRoutes from './routes/wallet.routes';
 import adminRoutes from './routes/admin.routes';
 import chatRoutes from './routes/chat.routes';
+import reportRoutes from './routes/report.routes';
 import { seedDeliveryPartners } from './seeds/seedDeliveryPartners';
 
 const app = express();
@@ -38,6 +39,7 @@ app.use('/api/cart', userRateLimiter, cartRoutes);
 app.use('/api/orders', userRateLimiter, orderRoutes);
 app.use('/api/wallet', userRateLimiter, walletRoutes);
 app.use('/api/admin', userRateLimiter, adminRoutes);
+app.use('/api/admin/reports', userRateLimiter, reportRoutes);
 app.use('/api/chat', userRateLimiter, chatRoutes);
 
 // ─── 404 handler ─────────────────────────────────────────────────────────────

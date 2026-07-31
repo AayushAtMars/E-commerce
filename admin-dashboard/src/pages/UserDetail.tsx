@@ -1,38 +1,60 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { catalogApi, orderApi } from '../api/client';
-import { ArrowLeft, Package, User, Calendar, Mail, Phone } from 'lucide-react';
+import { ArrowLeft, Package, User, Calendar, Mail, Phone, ShieldX, ShieldCheck, X } from 'lucide-react';
 
 export default function UserDetail() {
   const { id } = useParams<{ id: string }>();
   const [user, setUser] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [blockModalOpen, setBlockModalOpen] = useState(false);
+  const [blockReason, setBlockReason] = useState('');
+  const [blockLoading, setBlockLoading] = useState(false);
 
-  useEffect(() => {
-    fetchUserData();
-  }, [id]);
+  useEffect(() => { fetchUserData(); }, [id]);
 
   const fetchUserData = async () => {
     try {
-      // 1. Fetch all users and find this specific user (since backend doesn't have a get by ID admin route)
-      const usersRes = await catalogApi.get('/admin/users');
-      const allUsers = usersRes.data.data?.users || [];
-      const foundUser = allUsers.find((u: any) => u._id === id);
+      // Fetch user by ID directly
+      const userRes = await catalogApi.get(`/admin/users/${id}`);
+      const foundUser = userRes.data.data?.user;
       setUser(foundUser);
 
-      if (foundUser) {
-        // 2. Fetch all orders and filter by this user's ID
-        const ordersRes = await orderApi.get('/admin/orders');
-        const allOrders = ordersRes.data.data?.orders || [];
-        const userOrders = allOrders.filter((o: any) => o.userId === id);
-        // Sort newest first
-        setOrders(userOrders.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-      }
+      // Fetch orders for this user via filtered endpoint
+      const ordersRes = await orderApi.get('/admin/orders', { params: { limit: 100 } });
+      const allOrders = ordersRes.data.data?.orders || [];
+      const userOrders = allOrders
+        .filter((o: any) => o.userId === id)
+        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setOrders(userOrders);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBlock = async () => {
+    if (blockReason.trim().length < 5) { alert('Reason must be at least 5 characters.'); return; }
+    setBlockLoading(true);
+    try {
+      await catalogApi.patch(`/admin/users/${id}/block`, { reason: blockReason.trim() });
+      setBlockModalOpen(false);
+      setBlockReason('');
+      fetchUserData();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to block user.');
+    } finally { setBlockLoading(false); }
+  };
+
+  const handleUnblock = async () => {
+    if (!confirm('Are you sure you want to unblock this user?')) return;
+    try {
+      await catalogApi.patch(`/admin/users/${id}/unblock`);
+      fetchUserData();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to unblock user.');
     }
   };
 
@@ -67,12 +89,27 @@ export default function UserDetail() {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div>
-        <Link to="/users" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors mb-4">
-          <ArrowLeft size={16} className="mr-1" /> Back to Users
-        </Link>
-        <h2 className="text-2xl font-bold tracking-tight text-gray-900">User Details</h2>
-      </div>
+        <div className="flex justify-between items-center">
+          <div>
+            <Link to="/users" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors mb-4">
+              <ArrowLeft size={16} className="mr-1" /> Back to Users
+            </Link>
+            <h2 className="text-2xl font-bold tracking-tight text-gray-900">User Details</h2>
+          </div>
+
+          {/* Block / Unblock */}
+          {user.isBlocked ? (
+            <button onClick={handleUnblock}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors">
+              <ShieldCheck size={16} /> Unblock User
+            </button>
+          ) : (
+            <button onClick={() => setBlockModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors">
+              <ShieldX size={16} /> Block User
+            </button>
+          )}
+        </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile Card */}
@@ -89,13 +126,18 @@ export default function UserDetail() {
               <h3 className="text-xl font-bold text-gray-900">{user.name}</h3>
               <p className="text-gray-500">ID: {user._id}</p>
               
-              <div className="mt-4 flex gap-2">
+              <div className="mt-4 flex flex-wrap gap-2 justify-center">
                 <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium capitalize">
                   {user.authProvider || 'local'} Auth
                 </span>
                 {user.isVerified && (
                   <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-medium">
                     Verified
+                  </span>
+                )}
+                {user.isBlocked && (
+                  <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
+                    🚫 Blocked
                   </span>
                 )}
               </div>
@@ -197,6 +239,45 @@ export default function UserDetail() {
           </div>
         </div>
       </div>
+      {/* Block User Modal */}
+      {blockModalOpen && (
+        <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+            <div className="flex justify-between items-center p-6 border-b border-gray-100">
+              <h3 className="text-lg font-bold text-gray-900">Block User</h3>
+              <button onClick={() => { setBlockModalOpen(false); setBlockReason(''); }}
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-gray-600">
+                Blocking <strong>{user.name}</strong> will prevent them from accessing any API endpoints. Please provide a reason.
+              </p>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Reason <span className="text-red-500">*</span></label>
+                <textarea
+                  value={blockReason}
+                  onChange={e => setBlockReason(e.target.value)}
+                  rows={3}
+                  placeholder="e.g. Fraudulent activity, policy violation..."
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-400 outline-none resize-none"
+                />
+              </div>
+              <div className="flex justify-end gap-3">
+                <button onClick={() => { setBlockModalOpen(false); setBlockReason(''); }}
+                  className="px-5 py-2.5 rounded-xl font-medium text-gray-600 hover:bg-gray-100 transition-colors text-sm">
+                  Cancel
+                </button>
+                <button onClick={handleBlock} disabled={blockLoading || blockReason.trim().length < 5}
+                  className="px-5 py-2.5 rounded-xl font-medium text-white bg-red-600 hover:bg-red-500 disabled:opacity-50 transition-colors text-sm shadow-sm">
+                  {blockLoading ? 'Blocking...' : 'Block User'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

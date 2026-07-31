@@ -212,14 +212,17 @@ export function MyOrdersScreen() {
                     return (
                       <View style={styles.orderCard}>
                         {/* Top row: order number + status badge */}
-                        <View style={styles.cardTopRow}>
+                        <TouchableOpacity 
+                          style={styles.cardTopRow}
+                          onPress={() => navigation.navigate('OrderDetail', { orderId: item._id })}
+                        >
                           <Text style={styles.orderNumber}>ID : <Text style={styles.orderNumberHash}>{item.orderNumber}</Text></Text>
                           <View style={[styles.statusBadge, currentTab === 'Cancelled' && styles.statusBadgeCancelled]}>
                             <Text style={[styles.statusText, currentTab === 'Cancelled' && styles.statusTextCancelled]}>
                               {currentTab === 'Cancelled' ? 'Cancel Order' : `${currentTab} Order`}
                             </Text>
                           </View>
-                        </View>
+                        </TouchableOpacity>
                         
                         <View style={styles.divider} />
 
@@ -229,14 +232,7 @@ export function MyOrdersScreen() {
                             key={idx} 
                             style={[styles.productRow, idx > 0 && { marginTop: 12 }]}
                             onPress={() => {
-                              if (prod.productId) {
-                                (navigation as any).navigate('Home', {
-                                  screen: 'ProductDetail',
-                                  params: { productId: prod.productId }
-                                });
-                              } else {
-                                console.warn('No productId found for item', prod);
-                              }
+                              navigation.navigate('OrderDetail', { orderId: item._id });
                             }}
                           >
                             <View style={styles.imageContainer}>

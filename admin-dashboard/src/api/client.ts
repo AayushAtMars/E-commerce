@@ -1,22 +1,34 @@
 import axios from 'axios';
 
-// Using env variables if provided, otherwise fallback to deployed production endpoints
-export const catalogApi = axios.create({
-  baseURL: import.meta.env.VITE_CATALOG_API_URL || 'https://identity-catalog-service.onrender.com/api',
-});
+const CATALOG_BASE = import.meta.env.VITE_CATALOG_API_URL || 'https://identity-catalog-service.onrender.com/api';
+const ORDER_BASE = import.meta.env.VITE_ORDER_API_URL || 'https://commerce-order-service.onrender.com/api';
 
-export const orderApi = axios.create({
-  baseURL: import.meta.env.VITE_ORDER_API_URL || 'https://commerce-order-service.onrender.com/api',
-});
+export const catalogApi = axios.create({ baseURL: CATALOG_BASE });
+export const orderApi = axios.create({ baseURL: ORDER_BASE });
 
-// Add interceptors to attach API Key
-const attachToken = (config: any) => {
-  const apiKey = localStorage.getItem('adminApiKey');
-  if (apiKey && config.headers && !config.headers['x-admin-api-key']) {
-    config.headers['x-admin-api-key'] = apiKey;
+// Attach admin JWT token to every request
+const attachAdminToken = (config: any) => {
+  const token = localStorage.getItem('adminToken');
+  if (token && config.headers && !config.headers['Authorization']) {
+    config.headers['Authorization'] = `Bearer ${token}`;
   }
   return config;
 };
 
-catalogApi.interceptors.request.use(attachToken);
-orderApi.interceptors.request.use(attachToken);
+// On 401, clear auth and redirect to login
+const handle401 = (error: any) => {
+  if (error.response?.status === 401) {
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminRole');
+    localStorage.removeItem('adminName');
+    localStorage.removeItem('adminIsAuthenticated');
+    window.location.href = '/login';
+  }
+  return Promise.reject(error);
+};
+
+catalogApi.interceptors.request.use(attachAdminToken);
+orderApi.interceptors.request.use(attachAdminToken);
+
+catalogApi.interceptors.response.use((r) => r, handle401);
+orderApi.interceptors.response.use((r) => r, handle401);

@@ -10,6 +10,7 @@ interface ProductPrice {
   originalPrice: number;
   stock: number;
   title: string;
+  image?: string;
 }
 
 // Fetch fresh price + stock from Service A internal endpoint
@@ -64,7 +65,7 @@ export async function addItem(
     cart.items.push({
       productId: new mongoose.Types.ObjectId(productId),
       title: productData.title,
-      image: '',  // will be passed from app
+      image: productData.image || '',
       price: productData.price,
       size,
       color,

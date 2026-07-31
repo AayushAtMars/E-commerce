@@ -16,6 +16,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { CartStackParamList } from '../../navigation/types';
 import Feather from '@expo/vector-icons/Feather';
 import { useCartStore } from '../../store/cartStore';
+import { catalogApiModule } from '../../api/catalog.api';
 
 type CartNav = NativeStackNavigationProp<CartStackParamList>;
 
@@ -84,22 +85,33 @@ const SwipeableCartItem = ({ item, onRemove, onIncrease, onDecrease }: any) => {
 
 export function CartScreen() {
   const navigation = useNavigation<CartNav>();
-  const { items, updateQuantity, removeItem, total, itemCount } = useCartStore();
-  const [promoCode, setPromoCode] = useState('');
+  const { items, updateQuantity, removeItem, total, itemCount, appliedPromo, applyPromo, clearPromo } = useCartStore();
+  const [promoCode, setPromoCode] = useState(appliedPromo?.code || '');
   const [itemToRemove, setItemToRemove] = useState<any>(null);
+  const [validatingPromo, setValidatingPromo] = useState(false);
 
   const DELIVERY_FEE = 20;
   const TAX = 0;
-  const DISCOUNT = promoCode.toUpperCase() === 'SAVE20' ? 20 : 0;
   
   const subTotal = total();
+  const DISCOUNT = appliedPromo ? appliedPromo.discountAmount : 0;
   const grandTotal = subTotal + DELIVERY_FEE + TAX - DISCOUNT;
 
-  const handleApplyPromo = () => {
-    if (promoCode.trim().toUpperCase() === 'SAVE20') {
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim()) {
+      clearPromo();
+      return;
+    }
+    try {
+      setValidatingPromo(true);
+      const res = await catalogApiModule.validateCoupon({ code: promoCode.trim(), subtotal: subTotal });
+      applyPromo(promoCode.trim().toUpperCase(), res.data.data.discountAmount);
       Alert.alert('Success', 'Promo applied successfully!');
-    } else {
-      Alert.alert('Invalid', 'Enter SAVE20 for a discount.');
+    } catch (err: any) {
+      clearPromo();
+      Alert.alert('Invalid', err.response?.data?.message || 'Invalid coupon code.');
+    } finally {
+      setValidatingPromo(false);
     }
   };
 
@@ -172,8 +184,8 @@ export function CartScreen() {
             onChangeText={setPromoCode}
             autoCapitalize="characters"
           />
-          <TouchableOpacity style={styles.promoApplyBtn} onPress={handleApplyPromo}>
-            <Text style={styles.promoApplyText}>Apply</Text>
+          <TouchableOpacity style={styles.promoApplyBtn} onPress={handleApplyPromo} disabled={validatingPromo}>
+            <Text style={styles.promoApplyText}>{validatingPromo ? '...' : 'Apply'}</Text>
           </TouchableOpacity>
         </View>
 

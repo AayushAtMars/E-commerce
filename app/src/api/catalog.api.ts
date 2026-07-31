@@ -86,5 +86,15 @@ export const catalogApiModule = {
     catalogApi.post('/api/coupons/validate', data),
 
   seedCoupons: () => catalogApi.post('/api/coupons/seed'),
-};
 
+  // Tickets (Phase D)
+  getTickets: () => catalogApi.get('/api/tickets'),
+
+  getTicket: (id: string) => catalogApi.get(`/api/tickets/${id}`),
+
+  createTicket: (data: { subject: string; category: string; priority: string; text: string; orderId?: string }) => 
+    catalogApi.post('/api/tickets', data),
+
+  addTicketMessage: (id: string, text: string) => 
+    catalogApi.post(`/api/tickets/${id}/message`, { text }),
+};

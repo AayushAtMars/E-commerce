@@ -15,6 +15,10 @@ import profileRoutes from './routes/profile.routes';
 import couponRoutes from './routes/coupon.routes';
 import uploadRoutes from './routes/upload.routes';
 import adminRoutes from './routes/admin.routes';
+import adminAuthRoutes from './routes/adminAuth.routes';
+import { ticketRoutes } from './routes/ticket.routes';
+import { seedSuperAdmin } from './services/adminAuth.service';
+import settingsRoutes from './routes/settings.routes';
 
 const app = express();
 
@@ -46,6 +50,10 @@ app.use('/api/profile', userRateLimiter, profileRoutes);
 app.use('/api/coupons', publicRateLimiter, couponRoutes);
 app.use('/api/upload', userRateLimiter, uploadRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/admin', adminAuthRoutes);
+app.use('/api/tickets', userRateLimiter, ticketRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/admin/settings', settingsRoutes);
 app.use('/internal', internalProductRouter);
 
 // ─── 404 handler ─────────────────────────────────────────────────────────────
@@ -59,6 +67,7 @@ app.use(errorMiddleware);
 // ─── Bootstrap ───────────────────────────────────────────────────────────────
 async function bootstrap(): Promise<void> {
   await connectDB();
+  await seedSuperAdmin();
   app.listen(env.PORT, () => {
     console.log(`[identity-catalog-service] Running on port ${env.PORT} (${env.NODE_ENV})`);
   });

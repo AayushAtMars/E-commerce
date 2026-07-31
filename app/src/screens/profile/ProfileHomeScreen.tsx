@@ -22,6 +22,7 @@ const MENU_ITEMS = [
   { icon: 'clipboard', label: 'My Orders', screen: 'MyOrders' },
   { icon: 'tag', label: 'My Coupons', screen: 'MyCoupons' },
   { icon: 'briefcase', label: 'My Wallet', screen: 'MyWallet' },
+  { icon: 'help-circle', label: 'Help Center', screen: 'HelpCenter' },
   { icon: 'settings', label: 'Settings', screen: 'Settings' },
 ];
 

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { authMiddleware } from '../middlewares/auth.middleware';
 import * as controller from '../controllers/order.controller';
 import { validate } from '../middlewares/validate.middleware';
-import { createOrderSchema, orderIdParamsSchema, getOrdersQuerySchema } from '../validators/order.validators';
+import { createOrderSchema, orderIdParamsSchema, getOrdersQuerySchema, createReturnSchema } from '../validators/order.validators';
 
 const router = Router();
 router.use(authMiddleware);
@@ -14,5 +14,9 @@ router.get('/:id/tracking', validate({ params: orderIdParamsSchema }), controlle
 router.patch('/:id/cancel', validate({ params: orderIdParamsSchema }), controller.cancelOrder);
 router.patch('/:id/advance', validate({ params: orderIdParamsSchema }), controller.advanceStatus);
 router.post('/:id/reorder', validate({ params: orderIdParamsSchema }), controller.reorder);
+
+// Returns
+router.get('/returns', controller.listUserReturns);
+router.post('/:id/return', validate({ params: orderIdParamsSchema, body: createReturnSchema }), controller.createReturn);
 
 export default router;

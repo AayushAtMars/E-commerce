@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   ActivityIndicator, Alert, FlatList,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { ProfileStackParamList } from '../../navigation/types';
@@ -31,7 +31,7 @@ export function MyWalletScreen() {
   const queryClient = useQueryClient();
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
 
-  const { data: walletData, isLoading } = useQuery({
+  const { data: walletData, isLoading, refetch: refetchWallet } = useQuery({
     queryKey: ['wallet'],
     queryFn: async () => {
       const res = await commerceApiModule.getWallet();
@@ -39,13 +39,20 @@ export function MyWalletScreen() {
     },
   });
 
-  const { data: txData, isLoading: txLoading } = useQuery({
+  const { data: txData, isLoading: txLoading, refetch: refetchTx } = useQuery({
     queryKey: ['walletTxns'],
     queryFn: async () => {
       const res = await commerceApiModule.getWalletTransactions();
       return res.data.data;
     },
   });
+
+  useFocusEffect(
+    React.useCallback(() => {
+      refetchWallet();
+      refetchTx();
+    }, [refetchWallet, refetchTx])
+  );
 
   const topUpMutation = useMutation({
     mutationFn: (amount: number) => commerceApiModule.topUpWallet(amount),

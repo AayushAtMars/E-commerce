@@ -24,6 +24,10 @@ export const env = {
 
   // External
   ADMIN_API_KEY: process.env.ADMIN_API_KEY || 'default_secret_key',
+  ADMIN_JWT_SECRET: process.env.ADMIN_JWT_SECRET || 'admin_fallback_secret_change_in_prod',
+  ADMIN_DEFAULT_EMAIL: process.env.ADMIN_DEFAULT_EMAIL || 'admin@fashionstore.com',
+  ADMIN_DEFAULT_PASSWORD: process.env.ADMIN_DEFAULT_PASSWORD || 'Admin@123456',
+  HCAPTCHA_SECRET: process.env.HCAPTCHA_SECRET || 'dev_skip',
 
   // Email
   RESEND_API_KEY: requireEnv('RESEND_API_KEY'),

@@ -89,6 +89,7 @@ export type ProfileStackParamList = {
   PasswordManager: undefined;
   DeleteAccount: undefined;
   HelpCenter: undefined;
+  TicketDetail: { ticketId: string };
   PrivacyPolicy: undefined;
 };
 
@@ -99,4 +100,8 @@ export type RootParamList = {
   Main: undefined;
   LocationPermission: undefined;
   NotificationPermission: undefined;
+  Settings: undefined;
+  HelpCenter: undefined;
+  TicketDetail: { ticketId: string };
+  AddAddress: { addressId?: string };
 };

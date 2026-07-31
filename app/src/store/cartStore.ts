@@ -20,6 +20,9 @@ interface CartState {
   clearCart: () => void;
   total: () => number;
   itemCount: () => number;
+  appliedPromo: { code: string; discountAmount: number } | null;
+  applyPromo: (code: string, discountAmount: number) => void;
+  clearPromo: () => void;
 }
 
 export const useCartStore = create<CartState>()(
@@ -64,6 +67,10 @@ export const useCartStore = create<CartState>()(
       total: () => get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
 
       itemCount: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
+
+      appliedPromo: null,
+      applyPromo: (code, discountAmount) => set({ appliedPromo: { code, discountAmount } }),
+      clearPromo: () => set({ appliedPromo: null }),
     }),
     {
       name: 'cart-storage',

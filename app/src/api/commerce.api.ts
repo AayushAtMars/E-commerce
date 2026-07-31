@@ -32,10 +32,12 @@ export const commerceApiModule = {
   advanceOrderStatus: (id: string) => commerceApi.patch(`/api/orders/${id}/advance`),
   reorder: (id: string) => commerceApi.post(`/api/orders/${id}/reorder`),
 
+  // returns
+  createReturn: (orderId: string, data: { type: string; items: { productId: string; quantity: number; reason: string }[] }) => commerceApi.post(`/api/orders/${orderId}/return`, data),
+
   // Wallet (Phase 5)
   getWallet: () => commerceApi.get('/api/wallet'),
   topUpWallet: (amount: number) => commerceApi.post('/api/wallet/topup', { amount }),
   getWalletTransactions: (page = 1) =>
     commerceApi.get('/api/wallet/transactions', { params: { page } }),
 };
-

@@ -11,6 +11,43 @@ export async function listCoupons() {
   }).sort({ expiresAt: 1 });
 }
 
+export async function adminListCoupons(page: number = 1, limit: number = 50) {
+  const skip = (page - 1) * limit;
+  const [coupons, total] = await Promise.all([
+    Coupon.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Coupon.countDocuments(),
+  ]);
+  return { coupons, total, page, limit };
+}
+
+export async function createCoupon(data: any) {
+  if (data.code) {
+    const existing = await Coupon.findOne({ code: data.code.toUpperCase().trim() });
+    if (existing) throw createError('Coupon code already exists', 400, 'DUPLICATE_CODE');
+    data.code = data.code.toUpperCase().trim();
+  }
+  const coupon = new Coupon(data);
+  await coupon.save();
+  return coupon;
+}
+
+export async function updateCoupon(id: string, data: any) {
+  if (data.code) {
+    const existing = await Coupon.findOne({ code: data.code.toUpperCase().trim(), _id: { $ne: id } });
+    if (existing) throw createError('Coupon code already exists', 400, 'DUPLICATE_CODE');
+    data.code = data.code.toUpperCase().trim();
+  }
+  const coupon = await Coupon.findByIdAndUpdate(id, { $set: data }, { new: true });
+  if (!coupon) throw createError('Coupon not found', 404, 'NOT_FOUND');
+  return coupon;
+}
+
+export async function deactivateCoupon(id: string) {
+  const coupon = await Coupon.findByIdAndUpdate(id, { $set: { isActive: false } }, { new: true });
+  if (!coupon) throw createError('Coupon not found', 404, 'NOT_FOUND');
+  return coupon;
+}
+
 // ─── Validate coupon (called from app before checkout) ───────────────────────
 
 export async function validateCoupon(code: string, orderSubtotal: number) {

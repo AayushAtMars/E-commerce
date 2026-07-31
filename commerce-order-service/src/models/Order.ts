@@ -33,8 +33,17 @@ export interface IDeliveryAgent {
   rating: number;
 }
 
+export interface IShipment {
+  trackingId: string;
+  carrier: string;
+  trackingUrl?: string;
+  shippedAt?: Date;
+}
+
 export interface IOrder extends Document {
   userId: mongoose.Types.ObjectId;
+  userEmail?: string;
+  userName?: string;
   orderNumber: string;
   items: IOrderItem[];
   shippingAddress: IOrderAddress;
@@ -49,6 +58,7 @@ export interface IOrder extends Document {
   statusHistory: { status: OrderStatus; timestamp: Date; note?: string }[];
   estimatedDelivery?: Date;
   deliveryAgent?: IDeliveryAgent;
+  shipment?: IShipment;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -82,6 +92,8 @@ const AddressSnapshotSchema = new Schema<IOrderAddress>(
 const OrderSchema = new Schema<IOrder>(
   {
     userId: { type: Schema.Types.ObjectId, required: true, index: true },
+    userEmail: { type: String },
+    userName: { type: String },
     orderNumber: { type: String, required: true, unique: true },
     items: [OrderItemSchema],
     shippingAddress: { type: AddressSnapshotSchema, required: true },
@@ -121,6 +133,12 @@ const OrderSchema = new Schema<IOrder>(
       avatar: { type: String },
       vehicle: { type: String },
       rating: { type: Number },
+    },
+    shipment: {
+      trackingId: { type: String },
+      carrier: { type: String },
+      trackingUrl: { type: String },
+      shippedAt: { type: Date },
     },
   },
   { timestamps: true }

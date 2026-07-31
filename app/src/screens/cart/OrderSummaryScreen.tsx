@@ -19,8 +19,9 @@ type SummaryRoute = RouteProp<CartStackParamList, 'OrderSummary'>;
 export function OrderSummaryScreen() {
   const navigation = useNavigation<CartNav>();
   const route = useRoute<SummaryRoute>();
-  const { subtotal, shippingCost, shippingType, promoCode, selectedAddress, shippingDate } = route.params;
-  const { items } = useCartStore();
+  const { subtotal, shippingCost, shippingType, selectedAddress, shippingDate } = route.params;
+  const { items, appliedPromo } = useCartStore();
+  const promoCode = appliedPromo?.code;
 
   const handleProceedToPayment = () => {
     navigation.navigate('SelectPayment', {

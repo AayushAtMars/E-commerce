@@ -11,6 +11,8 @@ export interface IUser extends Document {
   avatarUrl?: string;
   authProvider: 'local' | 'google' | 'apple' | 'facebook';
   isVerified: boolean;
+  isBlocked: boolean;
+  blockReason?: string;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(plain: string): Promise<boolean>;
@@ -31,6 +33,8 @@ const UserSchema = new Schema<IUser>(
       default: 'local',
     },
     isVerified: { type: Boolean, default: false },
+    isBlocked: { type: Boolean, default: false },
+    blockReason: { type: String },
   },
   { timestamps: true }
 );

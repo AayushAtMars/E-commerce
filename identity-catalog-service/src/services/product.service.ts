@@ -1,4 +1,5 @@
 import { Product, IProduct } from '../models/Product';
+import { Category } from '../models/Category';
 import { Wishlist } from '../models/Wishlist';
 import { createError } from '../middlewares/error.middleware';
 
@@ -29,7 +30,7 @@ export async function listProducts(filter: ProductFilter) {
     limit = 20,
   } = filter;
 
-  const query: Record<string, unknown> = {};
+  const query: Record<string, unknown> = { isVisible: { $ne: false } }; // Public: show visible or legacy (undefined) products
 
   if (category) query.category = { $regex: new RegExp(`^${category}$`, 'i') };
   if (minPrice !== undefined || maxPrice !== undefined) {
@@ -104,14 +105,14 @@ export async function getFeaturedProducts() {
 // ─── Categories ───────────────────────────────────────────────────────────────
 
 export async function getCategories() {
-  const categories = await Product.distinct('category');
-  return categories.sort();
+  const categories = await Category.find({ isActive: true }).sort({ displayOrder: 1, name: 1 });
+  return categories.map(c => c.name);
 }
 
 // ─── Internal price check (called by Service B) ───────────────────────────────
 
 export async function getProductPriceInternal(productId: string) {
-  const product = await Product.findById(productId).select('price discountPrice stock title');
+  const product = await Product.findById(productId).select('price discountPrice stock title images');
   if (!product) throw createError('Product not found.', 404, 'PRODUCT_NOT_FOUND');
   return {
     productId: product._id.toString(),
@@ -119,6 +120,7 @@ export async function getProductPriceInternal(productId: string) {
     originalPrice: product.price,
     stock: product.stock,
     title: product.title,
+    image: product.images?.[0] || '',
   };
 }
 
@@ -128,4 +130,36 @@ export async function createProduct(productData: Partial<IProduct>) {
   const product = new Product(productData);
   await product.save();
   return product;
+}
+
+// ─── Update Product (Admin) ───────────────────────────────────────────────────
+
+export async function updateProduct(productId: string, data: Partial<IProduct>) {
+  const product = await Product.findByIdAndUpdate(
+    productId,
+    { $set: data },
+    { new: true, runValidators: true, returnDocument: 'after' }
+  );
+  if (!product) throw createError('Product not found.', 404, 'PRODUCT_NOT_FOUND');
+  return product;
+}
+
+// ─── Toggle Product Visibility (Admin) ────────────────────────────────────────
+
+export async function toggleProductVisibility(productId: string) {
+  const product = await Product.findById(productId);
+  if (!product) throw createError('Product not found.', 404, 'PRODUCT_NOT_FOUND');
+  product.isVisible = !product.isVisible;
+  await product.save();
+  return product;
+}
+
+// ─── Bulk Toggle Visibility (Admin) ───────────────────────────────────────────
+
+export async function bulkToggleVisibility(productIds: string[], isVisible: boolean) {
+  const result = await Product.updateMany(
+    { _id: { $in: productIds } },
+    { $set: { isVisible } }
+  );
+  return { modifiedCount: result.modifiedCount };
 }

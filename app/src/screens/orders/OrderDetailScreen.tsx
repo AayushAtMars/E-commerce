@@ -10,8 +10,10 @@ import {
   Image,
   ToastAndroid,
   Platform,
+  Modal,
+  TextInput,
 } from 'react-native';
-import { useNavigation, useRoute, RouteProp, CommonActions } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, CommonActions, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { ProfileStackParamList } from '../../navigation/types';
@@ -64,13 +66,23 @@ export function OrderDetailScreen() {
   const { orderId } = route.params;
   const queryClient = useQueryClient();
 
-  const { data: order, isLoading } = useQuery({
+  const [returnModalVisible, setReturnModalVisible] = React.useState(false);
+  const [returnReason, setReturnReason] = React.useState('');
+  const [returnType, setReturnType] = React.useState<'Refund' | 'Replacement'>('Refund');
+
+  const { data: order, isLoading, refetch } = useQuery({
     queryKey: ['order', orderId],
     queryFn: async () => {
       const res = await commerceApiModule.getOrder(orderId);
       return res.data.data.order;
     },
   });
+
+  useFocusEffect(
+    React.useCallback(() => {
+      refetch();
+    }, [refetch])
+  );
 
   const cancelMutation = useMutation({
     mutationFn: () => commerceApiModule.cancelOrder(orderId),
@@ -103,6 +115,27 @@ export function OrderDetailScreen() {
     },
   });
 
+  const returnMutation = useMutation({
+    mutationFn: () => {
+      const items = order.items.map((i: any) => ({
+        productId: i.productId,
+        quantity: i.quantity,
+        reason: returnReason.trim() || 'No reason provided',
+      }));
+      return commerceApiModule.createReturn(orderId, { items, type: returnType });
+    },
+    onSuccess: () => {
+      setReturnModalVisible(false);
+      setReturnReason('');
+      Alert.alert('Return Requested', 'Your return request has been submitted successfully.');
+    },
+    onError: (err: any) => {
+      setReturnModalVisible(false);
+      const msg = err?.response?.data?.message || err?.message || 'Could not submit return request.';
+      Alert.alert('Error', msg);
+    },
+  });
+
   const handleCancel = () => {
     Alert.alert(
       'Cancel Order',
@@ -110,6 +143,18 @@ export function OrderDetailScreen() {
       [
         { text: 'No', style: 'cancel' },
         { text: 'Yes, Cancel', style: 'destructive', onPress: () => cancelMutation.mutate() },
+      ]
+    );
+  };
+
+  const handleReturn = () => {
+    Alert.alert(
+      'Request Return',
+      'Would you like a refund or a replacement?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Refund', onPress: () => { setReturnType('Refund'); setReturnModalVisible(true); } },
+        { text: 'Replacement', onPress: () => { setReturnType('Replacement'); setReturnModalVisible(true); } },
       ]
     );
   };
@@ -136,6 +181,18 @@ export function OrderDetailScreen() {
   const sc = STATUS_COLORS[order.status] ?? { bg: colors.background, text: colors.textSecondary };
   const canCancel = ['Placed', 'In Progress'].includes(order.status);
   const isDelivered = order.status === 'Delivered';
+  
+  let canReturn = false;
+  if (isDelivered) {
+    const deliveredStatus = order.statusHistory?.find((h: any) => h.status === 'Delivered');
+    if (deliveredStatus) {
+      const deliveredDate = new Date(deliveredStatus.timestamp).getTime();
+      const fiveDaysInMs = 5 * 24 * 60 * 60 * 1000;
+      if (Date.now() - deliveredDate <= fiveDaysInMs) {
+        canReturn = true;
+      }
+    }
+  }
 
   return (
     <View style={styles.root}>
@@ -285,7 +342,63 @@ export function OrderDetailScreen() {
             )}
           </TouchableOpacity>
         )}
+
+        {/* Return (Delivered & Within 5 days) */}
+        {canReturn && (
+          <TouchableOpacity
+            style={styles.cancelAction}
+            onPress={handleReturn}
+            disabled={returnMutation.isPending}
+          >
+            {returnMutation.isPending ? (
+              <ActivityIndicator color={colors.danger} />
+            ) : (
+              <Text style={[styles.cancelActionText, { color: '#E0820B' }]}>Request Return</Text>
+            )}
+          </TouchableOpacity>
+        )}
       </View>
+
+      <Modal
+        visible={returnModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setReturnModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Reason for {returnType}</Text>
+            <TextInput
+              style={styles.reasonInput}
+              placeholder="Why are you returning this order?"
+              placeholderTextColor="#999"
+              multiline
+              numberOfLines={4}
+              value={returnReason}
+              onChangeText={setReturnReason}
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={() => setReturnModalVisible(false)}
+              >
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalSubmitBtn}
+                onPress={() => returnMutation.mutate()}
+                disabled={returnMutation.isPending}
+              >
+                {returnMutation.isPending ? (
+                  <ActivityIndicator color={colors.white} />
+                ) : (
+                  <Text style={styles.modalSubmitText}>Submit Request</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -369,4 +482,14 @@ const styles = StyleSheet.create({
   primaryActionText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   cancelAction: { height: 44, justifyContent: 'center', alignItems: 'center' },
   cancelActionText: { color: colors.danger, fontSize: 15, fontWeight: '600' },
+  
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  modalContent: { backgroundColor: '#fff', width: '100%', borderRadius: 20, padding: 24 },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: '#1A1A1A', marginBottom: 16 },
+  reasonInput: { backgroundColor: '#F9F9F9', borderRadius: 12, padding: 16, fontSize: 15, color: '#1A1A1A', minHeight: 100, textAlignVertical: 'top', marginBottom: 24 },
+  modalButtons: { flexDirection: 'row', gap: 12 },
+  modalCancelBtn: { flex: 1, height: 48, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F0F0F0', borderRadius: 24 },
+  modalCancelText: { color: '#666', fontWeight: '600', fontSize: 15 },
+  modalSubmitBtn: { flex: 1, height: 48, justifyContent: 'center', alignItems: 'center', backgroundColor: '#3E1F0F', borderRadius: 24 },
+  modalSubmitText: { color: '#fff', fontWeight: '600', fontSize: 15 },
 });

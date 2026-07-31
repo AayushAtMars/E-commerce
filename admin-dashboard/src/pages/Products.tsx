@@ -27,7 +27,7 @@ export default function Products() {
 
   const fetchProducts = async () => {
     try {
-      const res = await catalogApi.get('/products?limit=50');
+      const res = await catalogApi.get('/products/admin/all?limit=50');
       setProducts(res.data.data || []);
     } catch (err) {
       console.error(err);

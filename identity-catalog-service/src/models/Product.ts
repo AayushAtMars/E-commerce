@@ -16,6 +16,7 @@ export interface IProduct extends Document {
   sellerRole?: string;
   isFlashSale: boolean;
   isBestSeller: boolean;
+  isVisible: boolean;
   stock: number;
   createdAt: Date;
   updatedAt: Date;
@@ -38,6 +39,7 @@ const ProductSchema = new Schema<IProduct>(
     sellerRole: { type: String, default: 'Fashion Seller' },
     isFlashSale: { type: Boolean, default: false, index: true },
     isBestSeller: { type: Boolean, default: false, index: true },
+    isVisible: { type: Boolean, default: true, index: true },
     stock: { type: Number, default: 100, min: 0 },
   },
   { timestamps: true }

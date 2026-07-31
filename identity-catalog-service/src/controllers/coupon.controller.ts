@@ -17,6 +17,14 @@ export async function validateCoupon(req: AuthRequest, res: Response, next: Next
   } catch (err) { next(err); }
 }
 
+export async function recordCouponUsage(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { code } = req.body;
+    await couponService.recordCouponUsage(code);
+    res.json({ success: true, message: 'Coupon usage recorded' });
+  } catch (err) { next(err); }
+}
+
 export async function seedCoupons(_req: Request, res: Response, next: NextFunction) {
   try {
     const result = await couponService.seedCoupons();

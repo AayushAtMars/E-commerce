@@ -8,7 +8,6 @@ import { typography } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 import { Button } from '../../components/ui/Button';
 import { usePermissionStore } from '../../store/permissionStore';
-import * as Notifications from 'expo-notifications';
 import Feather from '@expo/vector-icons/Feather';
 
 type NavigationProp = NativeStackNavigationProp<RootParamList, 'NotificationPermission'>;
@@ -20,15 +19,11 @@ export function NotificationPermissionScreen() {
 
   const handleAllow = async () => {
     setLoading(true);
-    try {
-      const { status } = await Notifications.requestPermissionsAsync();
-      setNeedsNotification(status !== 'granted');
-    } catch (e: any) {
-      console.log('Error', e);
-      setNeedsNotification(false); // Unblock user if it fails
-    } finally {
+    // Simulate notification permission for Expo Go
+    setTimeout(() => {
+      setNeedsNotification(false);
       setLoading(false);
-    }
+    }, 500);
   };
 
   const handleLater = () => {

@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  Modal, TextInput, ActivityIndicator, Alert,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { catalogApiModule } from '../../api/catalog.api';
 import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
+import Feather from '@expo/vector-icons/Feather';
 
 const FAQ_ITEMS = [
   {
@@ -43,14 +47,54 @@ const FAQ_ITEMS = [
 ];
 
 export function HelpCenterScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
+  const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState<number | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [ticketForm, setTicketForm] = useState({ subject: '', category: 'Order Issue', text: '' });
+
+  const { data: tickets, isLoading, refetch } = useQuery({
+    queryKey: ['myTickets'],
+    queryFn: async () => {
+      const res = await catalogApiModule.getTickets();
+      return res.data.data;
+    }
+  });
+
+  useFocusEffect(
+    React.useCallback(() => {
+      refetch();
+    }, [refetch])
+  );
+
+  const createMutation = useMutation({
+    mutationFn: () => catalogApiModule.createTicket({ ...ticketForm, priority: 'Medium' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myTickets'] });
+      setModalVisible(false);
+      setTicketForm({ subject: '', category: 'Order Issue', text: '' });
+      Alert.alert('Success', 'Your support ticket has been created.');
+    },
+    onError: (err: any) => {
+      Alert.alert('Error', err?.response?.data?.message || 'Could not create ticket.');
+    }
+  });
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Closed': return colors.textSecondary;
+      case 'Resolved': return colors.success;
+      case 'Escalated': return colors.danger;
+      case 'In Progress': return '#F39C12';
+      default: return colors.primary;
+    }
+  };
 
   return (
     <View style={styles.root}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Text style={styles.backText}>←</Text>
+          <Feather name="chevron-left" size={24} color="#1A1A1A" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Help Center</Text>
         <View style={{ width: 44 }} />
@@ -58,10 +102,41 @@ export function HelpCenterScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <View style={styles.heroCard}>
-          <Text style={styles.heroIcon}>💬</Text>
+          <View style={styles.heroIconWrapper}>
+            <Feather name="message-circle" size={32} color={colors.primary} />
+          </View>
           <Text style={styles.heroTitle}>How can we help?</Text>
-          <Text style={styles.heroSub}>Browse FAQs or contact support</Text>
+          <Text style={styles.heroSub}>Browse FAQs or create a support ticket</Text>
+          <TouchableOpacity 
+            style={styles.heroBtn}
+            onPress={() => setModalVisible(true)}
+          >
+            <Text style={styles.heroBtnText}>Submit a Ticket</Text>
+          </TouchableOpacity>
         </View>
+
+        {isLoading ? (
+          <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
+        ) : tickets?.length > 0 ? (
+          <View style={{ marginBottom: spacing.lg }}>
+            <Text style={styles.sectionTitle}>My Support Tickets</Text>
+            {tickets.map((ticket: any) => (
+              <TouchableOpacity
+                key={ticket._id}
+                style={styles.ticketCard}
+                onPress={() => navigation.navigate('TicketDetail', { ticketId: ticket._id })}
+              >
+                <View style={styles.ticketHeader}>
+                  <Text style={styles.ticketSubject} numberOfLines={1}>{ticket.subject}</Text>
+                  <View style={[styles.ticketBadge, { backgroundColor: getStatusColor(ticket.status) }]}>
+                    <Text style={styles.ticketBadgeText}>{ticket.status}</Text>
+                  </View>
+                </View>
+                <Text style={styles.ticketIdText}>ID: {ticket._id.substring(0, 8).toUpperCase()}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : null}
 
         <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
         {FAQ_ITEMS.map((item, idx) => (
@@ -73,7 +148,7 @@ export function HelpCenterScreen() {
           >
             <View style={styles.faqQuestion}>
               <Text style={styles.faqQ}>{item.q}</Text>
-              <Text style={styles.faqChevron}>{expanded === idx ? '▲' : '▼'}</Text>
+              <Feather name={expanded === idx ? "chevron-up" : "chevron-down"} size={20} color={colors.textSecondary} />
             </View>
             {expanded === idx && (
               <Text style={styles.faqA}>{item.a}</Text>
@@ -86,11 +161,11 @@ export function HelpCenterScreen() {
           <Text style={styles.contactSub}>Our support team is available Mon–Sat, 9 AM–6 PM</Text>
           <View style={styles.contactRow}>
             <View style={styles.contactChip}>
-              <Text style={styles.contactIcon}>📧</Text>
+              <Feather name="mail" size={16} color={colors.primary} />
               <Text style={styles.contactText}>support@fashop.in</Text>
             </View>
             <View style={styles.contactChip}>
-              <Text style={styles.contactIcon}>📞</Text>
+              <Feather name="phone" size={16} color={colors.primary} />
               <Text style={styles.contactText}>1800-123-4567</Text>
             </View>
           </View>
@@ -98,46 +173,137 @@ export function HelpCenterScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* Create Ticket Modal */}
+      <Modal visible={modalVisible} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Submit a Ticket</Text>
+
+            <Text style={styles.label}>Category</Text>
+            <View style={styles.categoryRow}>
+              {['Order Issue', 'Product Issue', 'Payment', 'Other'].map(cat => (
+                <TouchableOpacity
+                  key={cat}
+                  style={[styles.catChip, ticketForm.category === cat && styles.catChipActive]}
+                  onPress={() => setTicketForm(prev => ({ ...prev, category: cat }))}
+                >
+                  <Text style={[styles.catChipText, ticketForm.category === cat && styles.catChipTextActive]}>{cat}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={styles.label}>Subject</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Brief description"
+              value={ticketForm.subject}
+              onChangeText={t => setTicketForm(prev => ({ ...prev, subject: t }))}
+            />
+
+            <Text style={styles.label}>Message</Text>
+            <TextInput
+              style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
+              placeholder="Provide details about your issue..."
+              multiline
+              value={ticketForm.text}
+              onChangeText={t => setTicketForm(prev => ({ ...prev, text: t }))}
+            />
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.modalBtnOutlined}
+                onPress={() => setModalVisible(false)}
+                disabled={createMutation.isPending}
+              >
+                <Text style={styles.modalBtnOutlinedText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalBtnFilled, (!ticketForm.subject || !ticketForm.text || createMutation.isPending) && { opacity: 0.5 }]}
+                disabled={!ticketForm.subject || !ticketForm.text || createMutation.isPending}
+                onPress={() => createMutation.mutate()}
+              >
+                {createMutation.isPending ? <ActivityIndicator color={colors.white} /> : <Text style={styles.modalBtnFilledText}>Submit</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
+  root: { flex: 1, backgroundColor: '#F8F9FB' },
   header: {
+    paddingTop: 60, paddingHorizontal: 20, paddingBottom: 20,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingTop: 52, paddingHorizontal: spacing.screenHorizontal, paddingBottom: spacing.md, backgroundColor: colors.white,
+    backgroundColor: '#F8F9FB',
   },
-  backBtn: { width: 44, height: 44, justifyContent: 'center' },
-  backText: { fontSize: 22, color: colors.textPrimary, fontWeight: typography.weights.semibold },
-  headerTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, color: colors.textPrimary },
+  backBtn: {
+    width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFF',
+    justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#EFEFEF',
+  },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: '#1A1A1A' },
   content: { padding: spacing.screenHorizontal },
   heroCard: {
-    backgroundColor: colors.primary, borderRadius: spacing.borderRadius.xl,
-    padding: spacing.xl, alignItems: 'center', marginBottom: spacing.lg,
+    backgroundColor: '#9E5B35', borderRadius: 24,
+    padding: 32, alignItems: 'center', marginBottom: spacing.lg,
+    shadowColor: '#9E5B35', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 16, elevation: 8,
   },
-  heroIcon: { fontSize: 40, marginBottom: spacing.sm },
-  heroTitle: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: colors.white, marginBottom: 4 },
-  heroSub: { fontSize: typography.sizes.md, color: 'rgba(255,255,255,0.7)' },
-  sectionTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, color: colors.textPrimary, marginBottom: spacing.md },
+  heroIconWrapper: {
+    width: 64, height: 64, borderRadius: 32, backgroundColor: '#FFF',
+    justifyContent: 'center', alignItems: 'center', marginBottom: 16,
+  },
+  heroTitle: { fontSize: 22, fontWeight: '800', color: '#FFF', marginBottom: 8 },
+  heroSub: { fontSize: 14, color: 'rgba(255,255,255,0.8)', textAlign: 'center', marginBottom: 24 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#1A1A1A', marginBottom: spacing.md, marginTop: spacing.md },
   faqCard: {
-    backgroundColor: colors.white, borderRadius: spacing.borderRadius.xl,
-    padding: spacing.md, marginBottom: spacing.sm,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
+    backgroundColor: '#FFF', borderRadius: 16,
+    padding: 16, marginBottom: 12,
+    borderWidth: 1, borderColor: '#F0F0F0',
   },
   faqQuestion: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
-  faqQ: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, color: colors.textPrimary },
-  faqChevron: { fontSize: 12, color: colors.textSecondary },
-  faqA: { fontSize: typography.sizes.md, color: colors.textSecondary, marginTop: spacing.sm, lineHeight: 22 },
+  faqQ: { flex: 1, fontSize: 15, fontWeight: '600', color: '#1A1A1A' },
+  faqA: { fontSize: 14, color: '#666', marginTop: 12, lineHeight: 22 },
   contactCard: {
-    backgroundColor: colors.white, borderRadius: spacing.borderRadius.xl,
-    padding: spacing.md, marginTop: spacing.md,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
+    backgroundColor: '#FFF', borderRadius: 20,
+    padding: 24, marginTop: spacing.lg, marginBottom: spacing.xl,
+    borderWidth: 1, borderColor: '#F0F0F0',
   },
-  contactTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, color: colors.textPrimary, marginBottom: 4 },
-  contactSub: { fontSize: typography.sizes.sm, color: colors.textSecondary, marginBottom: spacing.md },
-  contactRow: { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' },
-  contactChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.background, borderRadius: spacing.borderRadius.pill, paddingHorizontal: 12, paddingVertical: 8 },
-  contactIcon: { fontSize: 16 },
-  contactText: { fontSize: typography.sizes.sm, color: colors.textPrimary, fontWeight: typography.weights.medium },
+  contactTitle: { fontSize: 18, fontWeight: '700', color: '#1A1A1A', marginBottom: 8 },
+  contactSub: { fontSize: 14, color: '#666', marginBottom: 20 },
+  contactRow: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
+  contactChip: { 
+    flexDirection: 'row', alignItems: 'center', gap: 8, 
+    backgroundColor: '#F8F9FB', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12,
+    borderWidth: 1, borderColor: '#F0F0F0'
+  },
+  contactText: { fontSize: 14, color: '#333', fontWeight: '600' },
+  heroBtn: { backgroundColor: '#FFF', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 24 },
+  heroBtnText: { color: '#9E5B35', fontWeight: '800', fontSize: 15 },
+  ticketCard: { 
+    backgroundColor: '#FFF', padding: 16, borderRadius: 16, marginBottom: 12, 
+    borderWidth: 1, borderColor: '#F0F0F0', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' 
+  },
+  ticketHeader: { flex: 1, marginRight: 16 },
+  ticketSubject: { fontSize: 16, fontWeight: '700', color: '#1A1A1A', marginBottom: 4 },
+  ticketBadge: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12 },
+  ticketBadgeText: { color: colors.white, fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
+  ticketIdText: { fontSize: 12, color: '#888', fontWeight: '500' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: spacing.md },
+  modalContent: { backgroundColor: colors.white, borderRadius: spacing.borderRadius.xl, padding: spacing.lg },
+  modalTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, color: colors.textPrimary, marginBottom: spacing.lg, textAlign: 'center' },
+  label: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, color: colors.textPrimary, marginBottom: spacing.xs, marginTop: spacing.md },
+  input: { backgroundColor: colors.background, borderWidth: 1, borderColor: colors.borderLight, borderRadius: spacing.borderRadius.lg, padding: spacing.md, fontSize: typography.sizes.md, color: colors.textPrimary },
+  categoryRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  catChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: spacing.borderRadius.pill, backgroundColor: colors.background, borderWidth: 1, borderColor: colors.borderLight },
+  catChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  catChipText: { fontSize: typography.sizes.sm, color: colors.textSecondary, fontWeight: typography.weights.medium },
+  catChipTextActive: { color: colors.white },
+  modalActions: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.xl },
+  modalBtnOutlined: { flex: 1, paddingVertical: 14, borderRadius: spacing.borderRadius.lg, borderWidth: 1, borderColor: colors.borderLight, alignItems: 'center' },
+  modalBtnOutlinedText: { color: colors.textPrimary, fontWeight: typography.weights.semibold, fontSize: typography.sizes.md },
+  modalBtnFilled: { flex: 1, paddingVertical: 14, borderRadius: spacing.borderRadius.lg, backgroundColor: colors.primary, alignItems: 'center' },
+  modalBtnFilledText: { color: colors.white, fontWeight: typography.weights.semibold, fontSize: typography.sizes.md },
 });

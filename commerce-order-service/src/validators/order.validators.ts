@@ -22,3 +22,12 @@ export const orderIdParamsSchema = z.object({
 export const getOrdersQuerySchema = z.object({
   status: z.string().optional(),
 }).strict();
+
+export const createReturnSchema = z.object({
+  items: z.array(z.object({
+    productId: z.string().min(1),
+    quantity: z.number().int().min(1),
+    reason: z.string().min(5),
+  })).min(1, 'At least one item is required'),
+  type: z.enum(['Refund', 'Replacement']),
+}).strict();

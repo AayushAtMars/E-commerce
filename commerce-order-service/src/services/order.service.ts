@@ -6,6 +6,7 @@ import { DeliveryPartner } from '../models/DeliveryPartner';
 import { createError } from '../middlewares/error.middleware';
 import { env } from '../config/env';
 import mongoose from 'mongoose';
+import { sendOrderPlacedEmail, sendOrderStatusEmail, sendOrderCancelledEmail } from './email.service';
 
 const SHIPPING_COSTS: Record<ShippingType, number> = {
   Economy: 49,
@@ -13,10 +14,7 @@ const SHIPPING_COSTS: Record<ShippingType, number> = {
   Express: 199,
 };
 
-const PROMO_STUBS: Record<string, number> = {
-  FASHION10: 10,
-  SAVE20: 20,
-};
+
 
 // Status transition graph
 const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
@@ -52,6 +50,8 @@ async function assignNextDeliveryPartner() {
 
 interface CreateOrderInput {
   userId: string;
+  userEmail?: string;
+  userName?: string;
   shippingAddress: IOrderAddress;
   shippingType: ShippingType;
   paymentMethod: PaymentMethod;
@@ -64,9 +64,37 @@ async function refreshPrice(productId: string) {
       `${env.CATALOG_SERVICE_URL}/internal/products/${productId}/price`,
       { headers: { 'x-internal-key': env.INTERNAL_SERVICE_KEY }, timeout: 5000 }
     );
-    return res.data.data as { price: number; title: string; stock: number };
+    return res.data.data as { price: number; title: string; stock: number; image?: string };
   } catch {
     throw createError('Product unavailable. Please refresh your cart.', 502, 'CATALOG_UNAVAILABLE');
+  }
+}
+
+async function validatePromoInternal(code: string, subtotal: number) {
+  try {
+    const res = await axios.post(
+      `${env.CATALOG_SERVICE_URL}/internal/coupons/validate`,
+      { code, subtotal },
+      { headers: { 'x-internal-key': env.INTERNAL_SERVICE_KEY }, timeout: 5000 }
+    );
+    return res.data.data.discountAmount as number;
+  } catch (err: any) {
+    if (err.response?.status === 400 || err.response?.status === 404 || err.response?.status === 409) {
+      throw createError(err.response.data.message || 'Invalid promo code', 400, 'INVALID_PROMO');
+    }
+    throw createError('Unable to validate promo code at this time.', 502, 'CATALOG_UNAVAILABLE');
+  }
+}
+
+async function recordPromoUsageInternal(code: string) {
+  try {
+    await axios.post(
+      `${env.CATALOG_SERVICE_URL}/internal/coupons/record-usage`,
+      { code },
+      { headers: { 'x-internal-key': env.INTERNAL_SERVICE_KEY }, timeout: 5000 }
+    );
+  } catch (err) {
+    console.error('Failed to record promo usage:', err);
   }
 }
 
@@ -82,7 +110,7 @@ function deliveryDays(type: ShippingType) {
 // ─── Create order ─────────────────────────────────────────────────────────────
 
 export async function createOrder(input: CreateOrderInput) {
-  const { userId, shippingAddress, shippingType, paymentMethod, promoCode } = input;
+  const { userId, userEmail, userName, shippingAddress, shippingType, paymentMethod, promoCode } = input;
 
   const cart = await Cart.findOne({ userId });
   if (!cart || cart.items.length === 0) {
@@ -102,7 +130,7 @@ export async function createOrder(input: CreateOrderInput) {
       return {
         productId: item.productId.toString(),
         title: fresh.title,
-        image: item.image,
+        image: fresh.image || item.image,
         price: fresh.price,
         size: item.size,
         color: item.color,
@@ -116,9 +144,7 @@ export async function createOrder(input: CreateOrderInput) {
 
   let discount = 0;
   if (promoCode) {
-    const pct = PROMO_STUBS[promoCode.toUpperCase()];
-    if (!pct) throw createError('Invalid promo code.', 400, 'INVALID_PROMO');
-    discount = pct <= 100 ? Math.round((subtotal * pct) / 100) : pct;
+    discount = await validatePromoInternal(promoCode, subtotal);
   }
 
   const total = Math.max(0, subtotal + shippingCost - discount);
@@ -127,6 +153,8 @@ export async function createOrder(input: CreateOrderInput) {
 
   const order = await Order.create({
     userId: new mongoose.Types.ObjectId(userId),
+    userEmail,
+    userName,
     orderNumber: generateOrderNumber(),
     items: pricedItems,
     shippingAddress,
@@ -143,7 +171,19 @@ export async function createOrder(input: CreateOrderInput) {
     deliveryAgent: initialDeliveryAgent || undefined,
   });
 
+  if (promoCode) {
+    await recordPromoUsageInternal(promoCode);
+  }
+
   await Cart.findOneAndUpdate({ userId }, { items: [] });
+
+  // Fire-and-forget email
+  if (userEmail && userName) {
+    sendOrderPlacedEmail(userEmail, userName, order).catch(err => {
+      console.error(`[Email] Failed to send order placed email for ${order.orderNumber}:`, err);
+    });
+  }
+
   return order;
 }
 
@@ -175,6 +215,13 @@ export async function cancelOrder(userId: string, orderId: string) {
   order.status = 'Cancelled';
   order.statusHistory.push({ status: 'Cancelled', timestamp: new Date(), note: 'Cancelled by user.' });
   await order.save();
+
+  if (order.userEmail && order.userName) {
+    sendOrderCancelledEmail(order.userEmail, order.userName, order).catch(err => {
+      console.error(`[Email] Failed to send order cancelled email for ${order.orderNumber}:`, err);
+    });
+  }
+
   return order;
 }
 
@@ -205,6 +252,13 @@ export async function advanceOrderStatus(userId: string, orderId: string) {
   // (Delivery partner is now assigned immediately upon order creation)
 
   await order.save();
+
+  if (order.userEmail && order.userName) {
+    sendOrderStatusEmail(order.userEmail, order.userName, order, next).catch(err => {
+      console.error(`[Email] Failed to send order status email for ${order.orderNumber}:`, err);
+    });
+  }
+
   return order;
 }
 

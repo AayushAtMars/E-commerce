@@ -21,11 +21,13 @@ export function SelectPaymentScreen() {
   const navigation = useNavigation<CartNav>();
   const route = useRoute<PaymentRoute>();
   const queryClient = useQueryClient();
-  const { subtotal, shippingCost, shippingType, promoCode, selectedAddress } = route.params;
+  const { subtotal, shippingCost, shippingType, selectedAddress } = route.params;
   const [selected, setSelected] = useState<PaymentMethodType>('UPI');
   const [loading, setLoading] = useState(false);
   const [showRazorpay, setShowRazorpay] = useState(false);
-  const { clearCart, items } = useCartStore();
+  const { clearCart, items, appliedPromo, clearPromo } = useCartStore();
+  const promoCode = appliedPromo?.code;
+  const discountAmount = appliedPromo?.discountAmount || 0;
 
   const handleConfirmPayment = async () => {
     setLoading(true);
@@ -81,6 +83,7 @@ export function SelectPaymentScreen() {
 
       // Clear the local cart
       clearCart();
+      clearPromo();
 
       // Invalidate orders cache
       queryClient.invalidateQueries({ queryKey: ['myOrders'] });
@@ -210,7 +213,7 @@ export function SelectPaymentScreen() {
                   <script>
                     var options = {
                       "key": "${process.env.EXPO_PUBLIC_RAZORPAY_KEY}", 
-                      "amount": "${Math.max((subtotal + shippingCost) * 100, 10000)}", 
+                      "amount": "${Math.max((subtotal + shippingCost - discountAmount) * 100, 10000)}", 
                       "currency": "INR",
                       "name": "Premium Store",
                       "description": "Test Order Payment",
