@@ -26,18 +26,21 @@ export default function Layout({ onLogout }: LayoutProps) {
   const adminRole = localStorage.getItem('adminRole') || 'support';
   const isSuperAdmin = adminRole === 'super_admin';
 
+  const isOrderManager = adminRole === 'order_manager';
+  const isSupport = adminRole === 'support';
+
   const navItems = [
-    { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} /> },
-    { name: 'Products', path: '/products', icon: <Package size={20} /> },
-    { name: 'Categories', path: '/categories', icon: <LayoutList size={20} /> },
-    { name: 'Coupons', path: '/coupons', icon: <Tags size={20} /> },
-    { name: 'Orders', path: '/orders', icon: <ShoppingCart size={20} /> },
-    { name: 'Returns', path: '/returns', icon: <Undo2 size={20} /> },
-    { name: 'Tickets', path: '/tickets', icon: <Headphones size={20} /> },
+    ...(isSuperAdmin || isOrderManager ? [{ name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} /> }] : []),
+    ...(isSuperAdmin || isOrderManager ? [{ name: 'Products', path: '/products', icon: <Package size={20} /> }] : []),
+    ...(isSuperAdmin || isOrderManager ? [{ name: 'Categories', path: '/categories', icon: <LayoutList size={20} /> }] : []),
+    ...(isSuperAdmin ? [{ name: 'Coupons', path: '/coupons', icon: <Tags size={20} /> }] : []),
+    ...(isSuperAdmin || isOrderManager ? [{ name: 'Orders', path: '/orders', icon: <ShoppingCart size={20} /> }] : []),
+    ...(isSuperAdmin || isOrderManager ? [{ name: 'Returns', path: '/returns', icon: <Undo2 size={20} /> }] : []),
+    ...(isSuperAdmin || isSupport ? [{ name: 'Tickets', path: '/tickets', icon: <Headphones size={20} /> }] : []),
     { name: 'Users', path: '/users', icon: <UsersIcon size={20} /> },
     { name: 'Notifications', path: '/notifications', icon: <Bell size={20} /> },
-    { name: 'Audit Logs', path: '/audit-logs', icon: <ShieldAlert size={20} /> },
-    { name: 'Settings', path: '/settings', icon: <SettingsIcon size={20} /> },
+    ...(isSuperAdmin ? [{ name: 'Audit Logs', path: '/audit-logs', icon: <ShieldAlert size={20} /> }] : []),
+    ...(isSuperAdmin ? [{ name: 'Settings', path: '/settings', icon: <SettingsIcon size={20} /> }] : []),
     ...(isSuperAdmin ? [{ name: 'Admin Users', path: '/admin-users', icon: <Shield size={20} /> }] : []),
   ];
 

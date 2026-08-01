@@ -3,7 +3,13 @@ import { catalogApi, orderApi } from '../api/client';
 import { Users, Package, ShoppingCart, IndianRupee, Download, Filter } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
+import { Navigate } from 'react-router-dom';
+
 export default function Dashboard() {
+  const adminRole = localStorage.getItem('adminRole') || 'support';
+  if (adminRole === 'support') {
+    return <Navigate to="/tickets" replace />;
+  }
   const [stats, setStats] = useState({
     products: 0,
     orders: 0,
