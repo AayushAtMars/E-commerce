@@ -30,27 +30,25 @@ export function LocationPermissionScreen() {
         return;
       }
 
-      // Let the user move on immediately after granting permission
-      setNeedsLocation(false);
-
-      // Fetch location in the background without blocking the flow
-      (async () => {
-        try {
-          const location = await Location.getCurrentPositionAsync({});
-          const geocode = await Location.reverseGeocodeAsync({
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude
-          });
-          
-          if (geocode && geocode.length > 0) {
-            const place = geocode[0];
-            const locationString = [place.city || place.subregion, place.country].filter(Boolean).join(', ');
-            setLocation(locationString || 'Unknown Location');
-          }
-        } catch (e) {
-          console.warn('Background location fetch failed:', e);
+      // Fetch location before moving on so dummy location isn't shown
+      try {
+        const location = await Location.getCurrentPositionAsync({});
+        const geocode = await Location.reverseGeocodeAsync({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude
+        });
+        
+        if (geocode && geocode.length > 0) {
+          const place = geocode[0];
+          const locationString = [place.city || place.subregion, place.country].filter(Boolean).join(', ');
+          setLocation(locationString || 'Unknown Location');
         }
-      })();
+      } catch (e) {
+        console.warn('Location fetch failed:', e);
+      }
+
+      // Now let the user move on to the main app
+      setNeedsLocation(false);
       
     } catch (e: any) {
       console.warn('Permission request error:', e);
