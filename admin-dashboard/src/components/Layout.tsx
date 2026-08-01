@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Package, ShoppingCart, LogOut, Menu, X, Users as UsersIcon, Shield, Tags, LayoutList, Undo2, Headphones, Bell, Settings as SettingsIcon, ShieldAlert } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, LogOut, Menu, X, Users as UsersIcon, Shield, Tags, LayoutList, Undo2, Headphones, Bell, Settings as SettingsIcon, ShieldAlert, MonitorSmartphone } from 'lucide-react';
 
 interface LayoutProps {
   onLogout: () => void;
@@ -39,6 +39,7 @@ export default function Layout({ onLogout }: LayoutProps) {
     ...(isSuperAdmin || isSupport ? [{ name: 'Tickets', path: '/tickets', icon: <Headphones size={20} /> }] : []),
     { name: 'Users', path: '/users', icon: <UsersIcon size={20} /> },
     { name: 'Notifications', path: '/notifications', icon: <Bell size={20} /> },
+    ...(isSuperAdmin ? [{ name: 'Active Sessions', path: '/sessions', icon: <MonitorSmartphone size={20} /> }] : []),
     ...(isSuperAdmin ? [{ name: 'Audit Logs', path: '/audit-logs', icon: <ShieldAlert size={20} /> }] : []),
     ...(isSuperAdmin ? [{ name: 'Settings', path: '/settings', icon: <SettingsIcon size={20} /> }] : []),
     ...(isSuperAdmin ? [{ name: 'Admin Users', path: '/admin-users', icon: <Shield size={20} /> }] : []),

@@ -18,6 +18,8 @@ import TicketDetail from './pages/TicketDetail';
 import Notifications from './pages/Notifications';
 import Settings from './pages/Settings';
 import AuditLogs from './pages/AuditLogs';
+import Sessions from './pages/Sessions';
+import { catalogApi } from './api/client';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -28,7 +30,14 @@ function App() {
     setIsAuthenticated(true);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      if (localStorage.getItem('adminToken')) {
+        await catalogApi.post('/admin/auth/logout');
+      }
+    } catch (e) {
+      console.error('Logout API failed', e);
+    }
     setIsAuthenticated(false);
     localStorage.removeItem('adminToken');
     localStorage.removeItem('adminRole');
@@ -62,6 +71,7 @@ function App() {
           <Route path="tickets/:id" element={<TicketDetail />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="audit-logs" element={<AuditLogs />} />
+          <Route path="sessions" element={<Sessions />} />
           <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>

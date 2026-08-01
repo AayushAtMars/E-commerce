@@ -6,6 +6,9 @@ import {
   listAdminUsers,
   createAdminUser,
   updateAdminUser,
+  logoutSessionService,
+  revokeSessionService,
+  listActiveSessions,
 } from '../services/adminAuth.service';
 import { adminAuthMiddleware, requireRole } from '../middlewares/adminAuth.middleware';
 import { AdminUser } from '../models/AdminUser';
@@ -33,7 +36,10 @@ router.post('/auth/login', async (req: Request, res: Response, next: NextFunctio
       await verifyHCaptcha(captchaToken);
     }
 
-    const { token, admin } = await adminLoginService(email, password);
+    const ipAddress = req.ip || req.socket.remoteAddress || 'Unknown IP';
+    const userAgent = req.headers['user-agent'] || 'Unknown Browser';
+
+    const { token, admin } = await adminLoginService(email, password, ipAddress, userAgent);
     res.json({ success: true, data: { token, admin } });
   } catch (err) { next(err); }
 });
@@ -48,9 +54,29 @@ router.get('/auth/me', adminAuthMiddleware, async (req: Request, res: Response, 
 });
 
 // ─── POST /api/admin/auth/logout ─────────────────────────────────────────────
-// Client-side token clear is sufficient; this endpoint exists for future token blacklisting
-router.post('/auth/logout', adminAuthMiddleware, (_req: Request, res: Response) => {
-  res.json({ success: true, message: 'Logged out successfully.' });
+router.post('/auth/logout', adminAuthMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (req.sessionId) {
+      await logoutSessionService(req.sessionId);
+    }
+    res.json({ success: true, message: 'Logged out successfully.' });
+  } catch (err) { next(err); }
+});
+
+// ─── GET /api/admin/auth/sessions ────────────────────────────────────────────
+router.get('/auth/sessions', adminAuthMiddleware, requireRole('super_admin'), async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const sessions = await listActiveSessions();
+    res.json({ success: true, data: { sessions, count: sessions.length } });
+  } catch (err) { next(err); }
+});
+
+// ─── POST /api/admin/auth/sessions/:sessionId/revoke ────────────────────────
+router.post('/auth/sessions/:sessionId/revoke', adminAuthMiddleware, requireRole('super_admin'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await revokeSessionService(String(req.params.sessionId));
+    res.json({ success: true, message: 'Session revoked successfully.' });
+  } catch (err) { next(err); }
 });
 
 // ─── GET /api/admin/auth/admins — List all admin users ───────────────────────

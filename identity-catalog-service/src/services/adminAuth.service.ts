@@ -3,18 +3,19 @@ import jwt from 'jsonwebtoken';
 import axios from 'axios';
 import { env } from '../config/env';
 import { AdminUser, AdminRole } from '../models/AdminUser';
+import { AdminSession } from '../models/AdminSession';
 import { createError } from '../middlewares/error.middleware';
 
 const SALT_ROUNDS = 12;
 
 // ─── Token utilities ──────────────────────────────────────────────────────────
 
-export function issueAdminToken(adminId: string, role: AdminRole): string {
-  return jwt.sign({ adminId, role }, env.ADMIN_JWT_SECRET, { expiresIn: '8h' });
+export function issueAdminToken(adminId: string, role: AdminRole, sessionId: string): string {
+  return jwt.sign({ adminId, role, sessionId }, env.ADMIN_JWT_SECRET, { expiresIn: '8h' });
 }
 
-export function verifyAdminToken(token: string): { adminId: string; role: AdminRole } {
-  return jwt.verify(token, env.ADMIN_JWT_SECRET) as { adminId: string; role: AdminRole };
+export function verifyAdminToken(token: string): { adminId: string; role: AdminRole; sessionId: string } {
+  return jwt.verify(token, env.ADMIN_JWT_SECRET) as { adminId: string; role: AdminRole; sessionId: string };
 }
 
 // ─── CAPTCHA verification ─────────────────────────────────────────────────────
@@ -64,7 +65,7 @@ export async function seedSuperAdmin(): Promise<void> {
 
 // ─── Login ───────────────────────────────────────────────────────────────────
 
-export async function adminLoginService(email: string, password: string) {
+export async function adminLoginService(email: string, password: string, ipAddress: string, userAgent: string) {
   const admin = await AdminUser.findOne({ email: email.toLowerCase() });
   if (!admin) {
     throw createError('Invalid email or password.', 401, 'INVALID_CREDENTIALS');
@@ -81,8 +82,35 @@ export async function adminLoginService(email: string, password: string) {
   admin.lastLoginAt = new Date();
   await admin.save();
 
-  const token = issueAdminToken(admin._id.toString(), admin.role);
+  // Create a new session valid for 8 hours
+  const expiresAt = new Date(Date.now() + 8 * 60 * 60 * 1000);
+  const session = await AdminSession.create({
+    adminId: admin._id,
+    ipAddress,
+    userAgent,
+    expiresAt,
+  });
+
+  const token = issueAdminToken(admin._id.toString(), admin.role, session._id.toString());
   return { token, admin };
+}
+
+// ─── Session management ───────────────────────────────────────────────────────
+
+export async function logoutSessionService(sessionId: string) {
+  await AdminSession.findByIdAndUpdate(sessionId, { isActive: false });
+}
+
+export async function revokeSessionService(sessionId: string) {
+  const session = await AdminSession.findByIdAndUpdate(sessionId, { isActive: false }, { new: true });
+  if (!session) throw createError('Session not found.', 404, 'NOT_FOUND');
+  return session;
+}
+
+export async function listActiveSessions(filterAdminId?: string) {
+  const query: any = { isActive: true, expiresAt: { $gt: new Date() } };
+  if (filterAdminId) query.adminId = filterAdminId;
+  return AdminSession.find(query).populate('adminId', 'name email role').sort({ createdAt: -1 });
 }
 
 // ─── Admin user management ────────────────────────────────────────────────────
