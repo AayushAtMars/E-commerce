@@ -14,11 +14,12 @@ export function errorMiddleware(
 ): void {
   // Handle Zod validation errors
   if (err.name === 'ZodError') {
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
       message: JSON.parse(err.message).map((e: any) => e.message).join(', '),
       code: 'VALIDATION_ERROR',
     });
+    return;
   }
 
   const statusCode = err.statusCode ?? 500;
