@@ -17,26 +17,47 @@ import { commerceApiModule } from '../../api/commerce.api';
 import { catalogApiModule } from '../../api/catalog.api';
 import Feather from '@expo/vector-icons/Feather';
 
-function OrderItemImage({ prod, style }: { prod: any; style: any }) {
-  const [image, setImage] = React.useState(prod.image);
+function ProductCardItem({ item }: { item: any }) {
+  const [image, setImage] = React.useState(item.image);
+  const [rating, setRating] = React.useState<number | null>(null);
 
   React.useEffect(() => {
-    if ((!image || image.trim() === '') && prod.productId) {
-      catalogApiModule.getProduct(prod.productId).then(res => {
-        if (res.data?.data?.product?.images?.[0]) {
-          setImage(res.data.data.product.images[0]);
+    if (item.productId) {
+      catalogApiModule.getProduct(item.productId).then(res => {
+        const prodData = res.data?.data?.product;
+        if (prodData) {
+          if ((!image || image.trim() === '') && prodData.images?.[0]) {
+            setImage(prodData.images[0]);
+          }
+          if (prodData.rating !== undefined) {
+            setRating(prodData.rating);
+          }
         }
       }).catch(() => {});
     }
-  }, [prod.productId, image]);
+  }, [item.productId, image]);
 
   const finalUri = (image && image.trim() !== '') ? image : 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=150&h=150';
 
   return (
-    <Image 
-      source={{ uri: finalUri }} 
-      style={style} 
-    />
+    <View style={styles.productCard}>
+      <View style={styles.imageContainer}>
+        <Image source={{ uri: finalUri }} style={styles.productImage} />
+      </View>
+      <View style={styles.productInfo}>
+        <View style={styles.productTitleRow}>
+          <Text style={styles.productTitle} numberOfLines={1}>{item.title}</Text>
+          <View style={styles.ratingBox}>
+            <Feather name="star" size={12} color="#F5A623" />
+            <Text style={styles.ratingText}>{rating != null ? rating.toFixed(1) : '5.0'}</Text>
+          </View>
+        </View>
+        <Text style={styles.productMeta}>
+          {item.category || 'Dress'} | Size : {item.size || 'M'} | Qty : {item.quantity}
+        </Text>
+        <Text style={styles.productPrice}>₹{item.price.toFixed(2)}</Text>
+      </View>
+    </View>
   );
 }
 
@@ -108,24 +129,7 @@ export function TrackOrderScreen() {
         
         {/* Product Cards */}
         {order.items.map((item: any, idx: number) => (
-          <View key={idx} style={styles.productCard}>
-            <View style={styles.imageContainer}>
-              <OrderItemImage prod={item} style={styles.productImage} />
-            </View>
-            <View style={styles.productInfo}>
-              <View style={styles.productTitleRow}>
-                <Text style={styles.productTitle} numberOfLines={1}>{item.title}</Text>
-                <View style={styles.ratingBox}>
-                  <Feather name="star" size={12} color="#F5A623" />
-                  <Text style={styles.ratingText}>5.0</Text>
-                </View>
-              </View>
-              <Text style={styles.productMeta}>
-                {item.category || 'Dress'} | Size : {item.size || 'M'} | Qty : {item.quantity}
-              </Text>
-              <Text style={styles.productPrice}>${item.price.toFixed(2)}</Text>
-            </View>
-          </View>
+          <ProductCardItem key={idx} item={item} />
         ))}
 
         {/* Order Details */}
@@ -209,7 +213,7 @@ export function TrackOrderScreen() {
         </TouchableOpacity>
 
         {/* Keep advance button for demo purposes */}
-        {!isCancelled && order.status !== 'Delivered' && (
+        {/* {!isCancelled && order.status !== 'Delivered' && (
           <TouchableOpacity
             style={styles.advanceTextBtn}
             onPress={() => advanceMutation.mutate()}
@@ -221,7 +225,7 @@ export function TrackOrderScreen() {
               <Text style={styles.advanceText}>Advance to Next Status →</Text>
             )}
           </TouchableOpacity>
-        )}
+        )} */}
       </View>
     </View>
   );

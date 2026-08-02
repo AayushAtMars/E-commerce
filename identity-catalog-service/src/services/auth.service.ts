@@ -129,6 +129,9 @@ export async function loginService(data: { email: string; password: string }) {
   if (!user) {
     throw createError('Invalid email or password.', 401, 'INVALID_CREDENTIALS');
   }
+  if (user.isBlocked) {
+    throw createError(user.blockReason || 'Your account has been blocked by an administrator.', 403, 'ACCOUNT_BLOCKED');
+  }
   if (!user.isVerified) {
     throw createError('Please verify your email before logging in.', 403, 'EMAIL_NOT_VERIFIED');
   }
@@ -179,6 +182,9 @@ export async function refreshTokenService(token: string) {
 
   const user = await User.findById(payload.userId);
   if (!user) throw createError('User not found.', 404, 'USER_NOT_FOUND');
+  if (user.isBlocked) {
+    throw createError(user.blockReason || 'Your account has been blocked by an administrator.', 403, 'ACCOUNT_BLOCKED');
+  }
 
   const tokens = issueTokens(user._id.toString());
   return { ...tokens };

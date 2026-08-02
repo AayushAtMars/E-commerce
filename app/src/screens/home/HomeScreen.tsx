@@ -9,6 +9,7 @@ import {
   FlatList,
   ActivityIndicator,
   RefreshControl,
+  Dimensions,
 } from 'react-native';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -32,6 +33,38 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 type HomeNav = NativeStackNavigationProp<HomeStackParamList>;
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+const BANNERS = [
+  {
+    id: '1',
+    badge: "Today's Exclusive Deals",
+    titleMain: "Enjoy ",
+    titleItalic: "Extra Off",
+    upTo: "Up to",
+    percentage: "30",
+    image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=400&q=80'
+  },
+  {
+    id: '2',
+    badge: "Summer Collection",
+    titleMain: "Fresh ",
+    titleItalic: "Styles",
+    upTo: "Flat",
+    percentage: "50",
+    image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=400&q=80'
+  },
+  {
+    id: '3',
+    badge: "Weekend Sale",
+    titleMain: "Super ",
+    titleItalic: "Savings",
+    upTo: "Extra",
+    percentage: "20",
+    image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=400&q=80'
+  }
+];
 
 const renderCategoryIcon = (category: string, isActive: boolean) => {
   const color = isActive ? colors.white : colors.textPrimary;
@@ -61,6 +94,24 @@ export function HomeScreen() {
   const [locationModalVisible, setLocationModalVisible] = useState(false);
 
   const { currentLocation } = useLocationStore();
+
+  const flatListRef = React.useRef<FlatList>(null);
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+
+  const bannerWidth = SCREEN_WIDTH - (spacing.screenHorizontal * 2);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentBannerIndex((prevIndex) => {
+        const nextIndex = (prevIndex + 1) % BANNERS.length;
+        if (flatListRef.current) {
+          flatListRef.current.scrollToIndex({ index: nextIndex, animated: true });
+        }
+        return nextIndex;
+      });
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   const { data: featured, isLoading: loadingFeatured, refetch: refetchFeatured } = useFeaturedProducts();
   const { data: categories, isLoading: loadingCats } = useCategories();
@@ -147,33 +198,53 @@ export function HomeScreen() {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.offerBanner}>
-            <View style={styles.offerContent}>
-              <View style={styles.offerBadge}>
-                <Text style={styles.offerBadgeText}>Today's Exclusive Deals</Text>
-              </View>
-              <Text style={styles.offerTitle}>Enjoy <Text style={{fontStyle: 'italic'}}>Extra Off</Text></Text>
-              <View style={styles.offerDiscountRow}>
-                <Text style={styles.offerUpTo}>Up to</Text>
-                <Text style={styles.offerPercentage}>30</Text>
-                <Text style={styles.offerPercentSign}>%</Text>
-              </View>
-              <TouchableOpacity style={styles.claimButton}>
-                <Text style={styles.claimButtonText}>Claim</Text>
-              </TouchableOpacity>
-            </View>
-            <Image
-              source={{ uri: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=400&q=80' }}
-              style={styles.offerImage}
-              resizeMode="cover"
+          <View>
+            <FlatList
+              ref={flatListRef}
+              data={BANNERS}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item) => item.id}
+              getItemLayout={(data, index) => ({
+                length: bannerWidth,
+                offset: bannerWidth * index,
+                index,
+              })}
+              onMomentumScrollEnd={(event) => {
+                const index = Math.round(event.nativeEvent.contentOffset.x / bannerWidth);
+                setCurrentBannerIndex(index);
+              }}
+              renderItem={({ item }) => (
+                <View style={[styles.offerBanner, { width: bannerWidth }]}>
+                  <View style={styles.offerContent}>
+                    <View style={styles.offerBadge}>
+                      <Text style={styles.offerBadgeText}>{item.badge}</Text>
+                    </View>
+                    <Text style={styles.offerTitle}>{item.titleMain}<Text style={{fontStyle: 'italic'}}>{item.titleItalic}</Text></Text>
+                    <View style={styles.offerDiscountRow}>
+                      <Text style={styles.offerUpTo}>{item.upTo}</Text>
+                      <Text style={styles.offerPercentage}>{item.percentage}</Text>
+                      <Text style={styles.offerPercentSign}>%</Text>
+                    </View>
+                    <TouchableOpacity style={styles.claimButton}>
+                      <Text style={styles.claimButtonText}>Claim</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <Image
+                    source={{ uri: item.image }}
+                    style={styles.offerImage}
+                    resizeMode="cover"
+                  />
+                </View>
+              )}
             />
           </View>
 
           <View style={styles.pagination}>
-            <View style={[styles.dot, styles.dotActive]} />
-            <View style={styles.dot} />
-            <View style={styles.dot} />
-            <View style={styles.dot} />
+            {BANNERS.map((_, idx) => (
+              <View key={idx} style={[styles.dot, currentBannerIndex === idx && styles.dotActive]} />
+            ))}
           </View>
         </View>
 
