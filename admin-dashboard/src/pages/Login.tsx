@@ -1,15 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { Eye, EyeOff, Shield } from 'lucide-react';
-import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { catalogApi } from '../api/client';
 
 interface LoginProps {
   onLogin: () => void;
 }
-
-// hCaptcha site key — use your own from hcaptcha.com
-// In dev, use the always-pass test key: 10000000-ffff-ffff-ffff-000000000001
-const HCAPTCHA_SITE_KEY = import.meta.env.VITE_HCAPTCHA_SITE_KEY || '10000000-ffff-ffff-ffff-000000000001';
 
 export default function Login({ onLogin }: LoginProps) {
   const [email, setEmail] = useState('');
@@ -17,24 +12,16 @@ export default function Login({ onLogin }: LoginProps) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const captchaRef = useRef<HCaptcha>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
-    if (!captchaToken) {
-      setError('Please complete the CAPTCHA verification.');
-      return;
-    }
 
     setLoading(true);
     try {
       const res = await catalogApi.post('/admin/auth/login', {
         email: email.trim().toLowerCase(),
         password,
-        captchaToken,
       });
 
       const { token, admin } = res.data.data;
@@ -47,13 +34,10 @@ export default function Login({ onLogin }: LoginProps) {
       if (err.message === 'Network Error') {
         setError('Network Error — check your internet connection.');
       } else if (err.response?.status === 400) {
-        setError('CAPTCHA failed. Please try again.');
+        setError('Login failed. Please try again.');
       } else {
         setError(msg || 'Invalid email or password.');
       }
-      // Reset CAPTCHA on error
-      captchaRef.current?.resetCaptcha();
-      setCaptchaToken(null);
     } finally {
       setLoading(false);
     }
@@ -114,16 +98,6 @@ export default function Login({ onLogin }: LoginProps) {
             </div>
           </div>
 
-          {/* hCaptcha widget */}
-          <div className="flex justify-center">
-            <HCaptcha
-              ref={captchaRef}
-              sitekey={HCAPTCHA_SITE_KEY}
-              onVerify={(token) => setCaptchaToken(token)}
-              onExpire={() => setCaptchaToken(null)}
-            />
-          </div>
-
           {error && (
             <div className="text-red-600 text-sm text-center font-medium bg-red-50 border border-red-100 py-2.5 rounded-xl">
               {error}
@@ -133,16 +107,13 @@ export default function Login({ onLogin }: LoginProps) {
           <button
             id="admin-login-btn"
             type="submit"
-            disabled={loading || !captchaToken}
-            className={`w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-primary-600 hover:bg-primary-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all shadow-md ${(loading || !captchaToken) ? 'opacity-60 cursor-not-allowed' : ''}`}
+            disabled={loading}
+            className={`w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-primary-600 hover:bg-primary-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all shadow-md ${loading ? 'opacity-60 cursor-not-allowed' : ''}`}
           >
             {loading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
 
-        <p className="text-center text-xs text-gray-400 pt-2">
-          Protected by hCaptcha — Fashion Store Admin Panel
-        </p>
       </div>
     </div>
   );

@@ -212,20 +212,6 @@ export function TrackOrderScreen() {
           <Text style={styles.trackLiveBtnText}>Track Live Location</Text>
         </TouchableOpacity>
 
-        {/* Keep advance button for demo purposes */}
-        {/* {!isCancelled && order.status !== 'Delivered' && (
-          <TouchableOpacity
-            style={styles.advanceTextBtn}
-            onPress={() => advanceMutation.mutate()}
-            disabled={advanceMutation.isPending}
-          >
-            {advanceMutation.isPending ? (
-              <ActivityIndicator color="#3E1F0F" />
-            ) : (
-              <Text style={styles.advanceText}>Advance to Next Status →</Text>
-            )}
-          </TouchableOpacity>
-        )} */}
       </View>
     </View>
   );
